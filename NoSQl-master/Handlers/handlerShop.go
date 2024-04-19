@@ -681,10 +681,14 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 		ecores, _ := strconv.Atoi(r.FormValue("ecores"))
 		threads, _ := strconv.Atoi(r.FormValue("threads"))
 		techPr, _ := strconv.Atoi(r.FormValue("techPr"))
-		pcoresBase, _ := strconv.ParseFloat(r.FormValue("pcoresbase"), 64)
-		pcoresTurbo, _ := strconv.ParseFloat(r.FormValue("pcoresturbo"), 64)
-		ecoresBase, _ := strconv.ParseFloat(r.FormValue("ecoresbase"), 64)
-		ecoresTurbo, _ := strconv.ParseFloat(r.FormValue("ecoresturbo"), 64)
+		pcoresBase, _ := strconv.ParseFloat(r.FormValue("pcoresBase"), 64)
+		pcoresBoost, _ := strconv.ParseFloat(r.FormValue("pcoresBoost"), 64)
+		ecoresBase, _ := strconv.ParseFloat(r.FormValue("ecoresBase"), 64)
+		ecoresBoost, _ := strconv.ParseFloat(r.FormValue("ecoresBoost"), 64)
+		if ecores == 0 {
+			ecoresBase = 0
+			ecoresBoost = 0
+		}
 		channels, _ := strconv.Atoi(r.FormValue("channels"))
 		ramMaxFr, _ := strconv.Atoi(r.FormValue("maxFr"))
 		ramMaxCap, _ := strconv.Atoi(r.FormValue("maxCap"))
@@ -695,7 +699,7 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 		discount, _ := strconv.Atoi(r.FormValue("discount"))
 		amount, _ := strconv.Atoi(r.FormValue("amount"))
 		freeMult := false
-		if r.FormValue("freeMult") != "" {
+		if r.FormValue("freeMult") == "yes" {
 			freeMult = true
 		}
 
@@ -715,8 +719,8 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 		}
 
 		clockFrequency := data.ClockFrequencyCpu{
-			Pcores:         []float64{pcoresBase, pcoresTurbo},
-			Ecores:         []float64{ecoresBase, ecoresTurbo},
+			Pcores:         []float64{pcoresBase, pcoresBoost},
+			Ecores:         []float64{ecoresBase, ecoresBoost},
 			FreeMultiplier: freeMult,
 		}
 
@@ -756,7 +760,6 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 func ModifyCpuForm(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/modifyCpu.html"))
-	tmpl.Execute(w, data.GetUser(w))
 
 	data.Init("shop", "cpu")
 	var items []data.Cpu
@@ -805,9 +808,13 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 		threads, _ := strconv.Atoi(r.FormValue("threads"))
 		techPr, _ := strconv.Atoi(r.FormValue("techPr"))
 		pcoresBase, _ := strconv.ParseFloat(r.FormValue("pcoresbase"), 64)
-		pcoresTurbo, _ := strconv.ParseFloat(r.FormValue("pcoresturbo"), 64)
+		pcoresBoost, _ := strconv.ParseFloat(r.FormValue("pcoresturbo"), 64)
 		ecoresBase, _ := strconv.ParseFloat(r.FormValue("ecoresbase"), 64)
-		ecoresTurbo, _ := strconv.ParseFloat(r.FormValue("ecoresturbo"), 64)
+		ecoresBoost, _ := strconv.ParseFloat(r.FormValue("ecoresturbo"), 64)
+		if ecores == 0 {
+			ecoresBase = 0
+			ecoresBoost = 0
+		}
 		channels, _ := strconv.Atoi(r.FormValue("channels"))
 		ramMaxFr, _ := strconv.Atoi(r.FormValue("maxFr"))
 		ramMaxCap, _ := strconv.Atoi(r.FormValue("maxCap"))
@@ -818,7 +825,7 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 		discount, _ := strconv.Atoi(r.FormValue("discount"))
 		amount, _ := strconv.Atoi(r.FormValue("amount"))
 		freeMult := false
-		if r.FormValue("freeMult") != "" {
+		if r.FormValue("freeMult") == "yes" {
 			freeMult = true
 		}
 
@@ -838,8 +845,8 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 		}
 
 		clockFrequency := data.ClockFrequencyCpu{
-			Pcores:         []float64{pcoresBase, pcoresTurbo},
-			Ecores:         []float64{ecoresBase, ecoresTurbo},
+			Pcores:         []float64{pcoresBase, pcoresBoost},
+			Ecores:         []float64{ecoresBase, ecoresBoost},
 			FreeMultiplier: freeMult,
 		}
 
@@ -1272,7 +1279,6 @@ func ListCooling(w http.ResponseWriter, r *http.Request) {
 func ListCpu(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/fullListCpu.html"))
-	tmpl.Execute(w, data.GetUser(w))
 
 	data.Init("shop", "cpu")
 	var items []data.Cpu

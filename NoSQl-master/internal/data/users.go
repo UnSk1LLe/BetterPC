@@ -10,19 +10,19 @@ import (
 var Gmail string
 
 type User struct {
-	Name     string
-	Surname  string
-	Phone    string
-	Email    string
-	Password string
+	Name     string    `bson:"name"`
+	Surname  string    `bson:"surname"`
+	Dob      time.Time `bson:"dob"`
+	Email    string    `bson:"email"`
+	Password []byte    `bson:"password"`
 }
 
 func GetUser(w http.ResponseWriter) User {
-	name := Gmail
+	email := Gmail
 	var result User
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 
-	err := Collection.FindOne(ctx, bson.M{"name": name}).Decode(&result)
+	err := Collection.FindOne(ctx, bson.M{"email": email}).Decode(&result)
 	if err != nil {
 		http.Error(w, "Error retrieving data from MongoDB", http.StatusInternalServerError)
 		return result

@@ -2,97 +2,188 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Full list of products</title>
+    <title>Add CPU</title>
+    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
 </head>
 <body>
-<tbody>
-
-<form action="/addCpuDo" method="post">
-    <p>Manufacturer</p>
-    <select name="man" required>
-        <option value="Intel">Intel</option>
-        <option value="AMD">AMD</option>
-    </select>
-    <h1>Main Information</h1>
-    <p>Category</p>
-    <input type="text" name="category" required>
-    <p>Model</p>
-    <input type="text" name="model" required>
-    <p>Generation</p>
-    <input type="text" name="generation" required>
-    <p>Socket</p>
-    <input type="text" name="socket" required>
-    <p>Year</p>
-    <input type="number" min="2015" max="2024" name="year" required>
-    <h1>Cores</h1>
-    <p>P-Cores</p>
-    <input type="number" min="0" name="pcores" required>
-    <p>E-Cores</p>
-    <input type="number" min="0" name="ecores" required>
-    <p>Threads</p>
-    <input type="number" min="0" name="threads" required>
-    <p>Technical Process</p>
-    <input type="number" min="0" name="techPr" required>
-    <p>Clock Frequency</p>
-    <div>
-        <p>P-Cores Base</p>
-        <input type="number" min="0" step="0.1" name="pcoresbase" required>
-        <span>GHz</span>
-        <p>P-Cores Turbo-boost</p>
-        <input type="number" min="0" step="0.1" name="pcoresturbo" required>
-        <span>GHz</span>
-        <p>E-Cores Base</p>
-        <input type="number" min="0" step="0.1" name="ecoresbase">
-        <span>GHz</span>
-        <p>E-Cores Turbo-boost</p>
-        <input type="number" min="0" step="0.1" name="ecoresturbo">
-        <span>GHz</span>
-        <p>Free Multiplier</p>
-        <input type="checkbox" min="0" name="freeMult" required>
+<main>
+    <div class="add-cpu-card">
+        <h1>Add CPU</h1>
+        <form action="/addCpuDo" method="post" class="cpu-form">
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <select id="manufacturer" name="man" required>
+                    <option value="Intel">Intel</option>
+                    <option value="AMD">AMD</option>
+                </select>
+            </div>
+            <h2>Main Information</h2>
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <input type="text" id="category" name="category" required>
+            </div>
+            <div class="form-group">
+                <label for="model">Model:</label>
+                <input type="text" id="model" name="model" required>
+            </div>
+            <div class="form-group">
+                <label for="generation">Generation:</label>
+                <input type="text" id="generation" name="generation" required>
+            </div>
+            <div class="form-group">
+                <label for="socket">Socket:</label>
+                <input type="text" id="socket" name="socket" required>
+            </div>
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <input type="number" id="year" name="year" min="2015" max="2024" required>
+            </div>
+            <h2>Cores</h2>
+            <div class="form-group">
+                <label for="pcores">P-Cores:</label>
+                <input type="number" id="pcores" name="pcores" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="ecores">E-Cores:</label>
+                <input type="number" id="ecores" name="ecores" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="threads">Threads:</label>
+                <input type="number" id="threads" name="threads" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="techPr">Technical Process:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="techPr" name="techPr" min="0" required>
+                    <span class="unit">nm</span>
+                </div>
+            </div>
+            <h2>Clock Frequency</h2>
+            <div class="form-group">
+                <label for="pcores">P-Cores:</label>
+                <div class="inline-inputs">
+                    <div class="input-with-unit">
+                        <input type="number" id="pcoresBase" name="pcoresBase" min="0" required>
+                        <span class="unit">Base GHz</span>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="pcoresBoost" name="pcoresBoost" min="0" required>
+                        <span class="unit">Boost GHz</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ecores">E-Cores:</label>
+                <div class="inline-inputs">
+                    <div class="input-with-unit">
+                        <input type="number" id="ecoresBase" name="ecoresBase" min="0" required disabled>
+                        <span class="unit">Base GHz</span>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="ecoresBoost" name="ecoresBoost" min="0" required disabled>
+                        <span class="unit">Boost GHz</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="freeMult">Free Multiplier:</label>
+                <select id="freeMult" name="freeMult" required>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <h2>Ram</h2>
+            <div class="form-group">
+                <label for="channels">Channels:</label>
+                <input type="number" id="channels" name="channels" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="ddr4">DDR4</option>
+                    <option value="ddr5">DDR5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="maxFr">Max Frequency:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxFr" name="maxFr" min="0" required>
+                    <span class="unit">MHz</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="maxCap">Max Capacity:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxCap" name="maxCap" min="0" required>
+                    <span class="unit">Gb</span>
+                </div>
+            </div>
+            <h2>Other Information</h2>
+            <div class="form-group">
+                <label for="tdp">TDP:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="tdp" name="tdp" required>
+                    <span class="unit">W</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="graphics">Graphics</label>
+                <input type="text" id="graphics" name="graphics" placeholder="None">
+            </div>
+            <div class="form-group">
+                <label for="pcie">PCI-E Standard</label>
+                <select id="pcie" name="pcie" required>
+                    <option value="5">5.0</option>
+                    <option value="4">4.0</option>
+                    <option value="3">3.0</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="maxTemp">Max Temperature</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxTemp" name="maxTemp" min="0" required>
+                    <span class="unit">°C</span>
+                </div>
+            </div>
+            <h2>Price</h2>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="price" name="price" min="0" required>
+                    <span class="unit">₸</span>
+                </div>
+            </div>
+            <h2>Discount</h2>
+            <div class="form-group">
+                <label for="discount">Discount:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="discount" name="discount" min="0" max="100" value="0" required>
+                    <span class="unit">%</span>
+                </div>
+            </div>
+            <h2>Amount</h2>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" min="0" required>
+            </div>
+            <button type="submit" class="submit-button" name="addCpu">Add CPU</button>
+        </form>
     </div>
+</main>
+<script>
+    const ecores = document.getElementById('ecores');
+    const ecoresBase = document.getElementById('ecoresBase');
+    const ecoresBoost = document.getElementById('ecoresBoost');
 
-    <p>Ram</p>
-    <div>
-        <p>Channels</p>
-        <input type="number" min="0" name="channels" required>
-        <p>Type</p>
-        <input type="text" min="0" name="type" required>
-        <p>Max Frequency</p>
-        <input type="number" min="0" name="maxFr" required>
-        <span>MHz</span>
-        <p>Max Capacity</p>
-        <input type="number" min="0" name="maxCap" required>
-        <span>GB</span>
-    </div>
-    <p>TDP</p>
-    <input type="number" min="0" name="tdp" required>
-    <p>Graphics</p>
-    <input type="text" name="graphics">
-    <span>W</span>
-    <p>PciE</p>
-    <select name="pcie" required>
-        <option value="3.0">3.0</option>
-        <option value="4.0">4.0</option>
-        <option value="5.0">5.0</option>
-    </select>
-    <p>Max Temperature</p>
-    <input type="number" min="0" name="maxTemp" required>
-    <span>°C</span>
-
-    <h2>Price</h2>
-    <input type="number" min="0" name="price" required>
-    <span>₸</span>
-    <h2>Discount (%)</h2>
-    <input type="number" min="0" max="100" name="discount" value="0" required>
-    <span>%</span>
-    <h2>Amount</h2>
-    <input type="number" min="0" name="amount" required>
-
-    <button type="submit" name="addCpu">Add CPU</button>
-</form>
-
-
-
-</tbody>
+    ecores.addEventListener('input', function() {
+        if (ecores.value > 0) {
+            ecoresBase.disabled = false;
+            ecoresBoost.disabled = false;
+        } else {
+            ecoresBase.disabled = true;
+            ecoresBoost.disabled = true;
+        }
+    });
+</script>
 </body>
 </html>

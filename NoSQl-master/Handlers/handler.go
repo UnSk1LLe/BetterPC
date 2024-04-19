@@ -16,17 +16,26 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 
 		name := r.FormValue("name")
+		surname := r.FormValue("surname")
+		dobString := r.FormValue("dob") // Retrieve dob as string
 		email := r.FormValue("email")
 		password := r.FormValue("password")
+		confirmPassword := r.FormValue("confirm-password")
 
-		if email == "" || password == "" || name == "" {
-			http.Error(w, "Email and password are required", http.StatusBadRequest)
+		if name == "" || surname == "" || dobString == "" || email == "" || password == "" || confirmPassword == "" {
+			http.Error(w, "Not all fields are filled!", http.StatusBadRequest)
+			return
+		}
+
+		dob, err := time.Parse("2006-01-02", dobString) // Parse dob string to time.Time
+		if err != nil {
+			http.Error(w, "Invalid date of birth format", http.StatusBadRequest)
 			return
 		}
 
 		var count int64
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		count, err := data.Collection.CountDocuments(ctx, bson.M{"email": email})
+		count, err = data.Collection.CountDocuments(ctx, bson.M{"email": email})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -42,8 +51,16 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		recordUser := data.User{
+			Name:     name,
+			Surname:  surname,
+			Dob:      dob,
+			Email:    email,
+			Password: hashedPassword,
+		}
+
 		ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
-		_, err = data.Collection.InsertOne(ctx, bson.M{"email": email, "name": name, "password": hashedPassword})
+		_, err = data.Collection.InsertOne(ctx, recordUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -53,7 +70,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/register.html"))
+	tmpl := template.Must(template.ParseFiles("html/registrationForm.html"))
 	tmpl.Execute(w, nil)
 }
 
@@ -85,7 +102,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}*/
 
-		err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(password))
+		err = bcrypt.CompareHashAndPassword(result.Password, []byte(password))
 		if err != nil {
 			http.Error(w, "Invalid password", http.StatusUnauthorized)
 			return
@@ -97,8 +114,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			Expires: time.Now().Add(24 * time.Hour),
 		})
 
-		http.Redirect(w, r, "/home", http.StatusSeeOther)
-		logger.Infof("%s log in", email)
+		http.Redirect(w, r, "/shop", http.StatusSeeOther)
+		logger.Infof("%s LOGGED IN", email)
 		return
 	}
 
@@ -115,7 +132,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-	logger.Infof("%s do log out", data.Gmail)
+	logger.Infof("%s LOGGED OUT", data.Gmail)
 	data.Gmail = ""
 }
 

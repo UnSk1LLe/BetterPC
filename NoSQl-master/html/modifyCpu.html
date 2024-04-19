@@ -2,58 +2,181 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Full list of products</title>
+    <title>Modify CPU</title>
+    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
 </head>
 <body>
-
-<form action="/modifyCpu" method="post">
-    {{ range . }}
-    <p>{{.ID}}</p>
-    <p>Manufacturer</p>
-    <input type="text" name="man" value="{{.Manufacturer}}" required>
-    <p>Model</p>
-    <input type="text" name="model" value="{{.Model}}" required>
-    <p>Cores</p>
-    <input type="text" name="cores" value="{{.Cores}}" required>
-    <p>Threads</p>
-    <input type="text" name="threads" value="{{.Threads}}" required>
-    <p>Clock Frequency</p>
-    <div>
-        <p>Base</p>
-        <input type="text" name="base" value="{{index .ClockFrequency 0}}" required>
-        <span>GHz</span>
-        <p>Turbo-boost</p>
-        <input type="text" name="turbo" value="{{index .ClockFrequency 1}}" required>
-        <span>GHz</span>
+<main>
+    <div class="add-cpu-card">
+        <h1>Modify CPU</h1>
+        <form action="/modifyCpu" method="post" class="cpu-form">
+            {{ range . }}
+            {{ .ClockFrequency.Ecores }}
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <select id="manufacturer" name="man" required>
+                    <option value="Intel">Intel</option>
+                    <option value="AMD">AMD</option>
+                </select>
+            </div>
+            <h2>Main Information</h2>
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <input type="text" id="category" name="category" value="{{.Main.Category}}" required>
+            </div>
+            <div class="form-group">
+                <label for="model">Model:</label>
+                <input type="text" id="model" name="model" value="{{.Main.Model}}" required>
+            </div>
+            <div class="form-group">
+                <label for="generation">Generation:</label>
+                <input type="text" id="generation" name="generation" value="{{.Main.Generation}}" required>
+            </div>
+            <div class="form-group">
+                <label for="socket">Socket:</label>
+                <input type="text" id="socket" name="socket" value="{{.Main.Socket}}" required>
+            </div>
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <input type="number" id="year" name="year" min="2015" max="2024" value="{{.Main.Year}}" required>
+            </div>
+            <h2>Cores</h2>
+            <div class="form-group">
+                <label for="pcores">P-Cores:</label>
+                <input type="number" id="pcores" name="pcores" min="0" value="{{.Cores.Pcores}}" required>
+            </div>
+            <div class="form-group">
+                <label for="ecores">E-Cores:</label>
+                <input type="number" id="ecores" name="ecores" min="0" value="{{.Cores.Ecores}}" required>
+            </div>
+            <div class="form-group">
+                <label for="threads">Threads:</label>
+                <input type="number" id="threads" name="threads" min="0" value="{{.Cores.Threads}}" required>
+            </div>
+            <div class="form-group">
+                <label for="techPr">Technical Process:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="techPr" name="techPr" min="0" value="{{.Cores.TechnicalProcess}}" required>
+                    <span class="unit">nm</span>
+                </div>
+            </div>
+            <h2>Clock Frequency</h2>
+            <div class="form-group">
+                <label for="pcores">P-Cores:</label>
+                <div class="inline-inputs">
+                    <div class="input-with-unit">
+                        <input type="number" id="pcoresBase" name="pcoresBase" min="0" value="{{index .ClockFrequency.Pcores 0}}" step="0.1" required>
+                        <span class="unit">Base GHz</span>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="pcoresBoost" name="pcoresBoost" min="0" value="{{index .ClockFrequency.Pcores 1}}" step="0.1" required>
+                        <span class="unit">Boost GHz</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ecores">E-Cores:</label>
+                <div class="inline-inputs">
+                    <div class="input-with-unit">
+                        <input type="number" id="ecoresBase" name="ecoresBase" min="0" step="0.1" required disabled>
+                        <span class="unit">Base GHz</span>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="ecoresBoost" name="ecoresBoost" min="0" step="0.1" required disabled>
+                        <span class="unit">Boost GHz</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="freeMult">Free Multiplier:</label>
+                <select id="freeMult" name="freeMult" required>
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <h2>Ram</h2>
+            <div class="form-group">
+                <label for="channels">Channels:</label>
+                <input type="number" id="channels" name="channels" min="0" value="{{.Ram.Channels}}" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select id="type" name="type" required>
+                    <option value="DDR4">DDR4</option>
+                    <option value="DDR5">DDR5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="maxFr">Max Frequency:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxFr" name="maxFr" min="0" value="{{.Ram.MaxFrequency}}" required>
+                    <span class="unit">MHz</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="maxCap">Max Capacity:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxCap" name="maxCap" min="0" value="{{.Ram.MaxCapacity}}" required>
+                    <span class="unit">Gb</span>
+                </div>
+            </div>
+            <h2>Other Information</h2>
+            <div class="form-group">
+                <label for="tdp">TDP:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="tdp" name="tdp" value="{{.Tdp}}" required>
+                    <span class="unit">W</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="graphics">Graphics</label>
+                <input type="text" id="graphics" name="graphics" placeholder="None" value="{{.Graphics}}">
+            </div>
+            <div class="form-group">
+                <label for="pcie">PCI-E Standard</label>
+                <select id="pcie" name="pcie" required>
+                    <option value="5">5.0</option>
+                    <option value="4">4.0</option>
+                    <option value="3">3.0</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="maxTemp">Max Temperature</label>
+                <div class="input-with-unit">
+                    <input type="number" id="maxTemp" name="maxTemp" min="0" value="{{.MaxTemperature}}" required>
+                    <span class="unit">°C</span>
+                </div>
+            </div>
+            <h2>Price</h2>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="price" name="price" min="0" value="{{.Price}}" required>
+                    <span class="unit">₸</span>
+                </div>
+            </div>
+            <h2>Discount</h2>
+            <div class="form-group">
+                <label for="discount">Discount:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="discount" name="discount" min="0" max="100" value="0" value="{{.Discount}}" required>
+                    <span class="unit">%</span>
+                </div>
+            </div>
+            <h2>Amount</h2>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" min="0" value="{{.Amount}}" required>
+            </div>
+            <button type="submit" class="update-button" name="modifyCpu" value="{{.ID}}">Update</button>
+        </form>
+        <form action="/deleteCpu" method="post">
+            <button type="submit" class="delete-button" name="deleteCpu" value="{{.ID}}">Delete</button>
+        </form>
+        <script>
+        </script>
+        {{ end }}
     </div>
-    <p>Socket</p>
-    <input type="text" name="socket" value="{{.Socket}}" required>
-    <p>Ram</p>
-    <div>
-        <p>Type</p>
-        <input type="text" name="type" value="{{.Ram.Type}}" required>
-        <p>Max Frequency</p>
-        <input type="text" name="maxFr" value="{{.Ram.MaxFrequency}}" required>
-        <span>MHz</span>
-        <p>Max Capacity</p>
-        <input type="text" name="maxCap" value="{{.Ram.MaxCapacity}}" required>
-        <span>GB</span>
-    </div>
-    <p>TDP</p>
-    <input type="text" name="tdp" value="{{.Tdp}}" required>
-    <span>W</span>
-    <p>PciE</p>
-    <input type="text" name="pcie" value="{{.PciE}}" required>
-    <p>Max Temperature</p>
-    <input type="text" name="maxTemp" value="{{.MaxTemperature}}" required>
-    <span>°C</span>
-    <button type="submit" name="modifyCpu" value="{{.ID}}">Update</button>
-</form>
-
-<form action="/deleteCpu" method="post">
-    <button type="submit" name="deleteCpu" value="{{.ID}}">Delete</button>
-</form>
-{{ end }}
-
+</main>
 </body>
 </html>

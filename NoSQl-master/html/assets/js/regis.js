@@ -89,3 +89,30 @@ input.addEventListener("keyup", function(event) {
         warning.style.display = "none"
     }
 })
+
+document.addEventListener("input", function () {
+    const name = document.getElementById("name").value;
+    const surname = document.getElementById("surname").value;
+    const email = document.getElementById("email").value;
+    const dob = document.getElementById("dob").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+    const registerButton = document.getElementById("registerButton");
+
+    if (name && surname && email && dob && password && confirmPassword && password === confirmPassword) {
+        registerButton.disabled = false;
+    } else {
+        registerButton.disabled = true;
+    }
+});
+
+var today = new Date();
+
+// Format today's date as YYYY-MM-DD
+var yyyy = today.getFullYear();
+var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+var dd = String(today.getDate()).padStart(2, '0');
+var maxDate = yyyy + '-' + mm + '-' + dd;
+
+// Set the max attribute of the date input field to today's date
+document.getElementById("dob").max = maxDate;
