@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of products</title>
+</head>
+<body>
+<tbody>
+{{ range . }}
+    <tr>
+        {{.ID}}
+        <td>{{ .Manufacturer }}</td>
+        <td>{{ .Model  }}</td>
+        <td>{{ .Cores   }}</td>
+        <form method="post" action="/fullListCpu" method="post">
+            <button name="ssdbtn" type="submit" value="{{.ID}}">Full</button>
+        </form>
+        <form method="post" action="/modifyCpuForm" method="post">
+            <button name="modify" type="submit" value="{{.ID}}">Modify</button>
+        </form>
+        <br></br>
+    </tr>
+{{ end }}
+
+<form action="/addCpuForm" method="post">
+    <button name="cpuForm" type="submit">Add CPU</button>
+</form>
+</tbody>
+</body>
+</html>

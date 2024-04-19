@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Processor</title>
+  <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+</head>
+<body>
+<header>
+  <nav>
+    <div id="menu">
+      <ul>
+        <li class="dropdown">
+          <a href="#" class="dropbtn catalog-button">Catalog</a>
+          <div class="dropdown-content">
+            <a href="#">CPU</a>
+            <a href="#">GPU</a>
+            <a href="#">Motherboards</a>
+            <a href="#">RAM</a>
+            <a href="#">Power supply</a>
+            <a href="#">SSD</a>
+            <a href="#">HDD</a>
+            <a href="#">Air Cooling</a>
+            <a href="#">Water Cooling</a>
+            <a href="#">Housing</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div id="search-bar">
+      <input type="text" id="search-input" placeholder="Search CPUs...">
+      <button id="search-button">Search</button>
+    </div>
+    <div id="user-panel">
+      <a href="#"><img src="cart_icon.png" alt="Shopping Cart"></a>
+      <a href="#"><img src="account_icon.png" alt="User Account"></a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <!-- CPU list with table layout -->
+  <div class="cpu-table">
+    {{ range . }}
+    <div class="cpu-item">
+      <!-- CPU image -->
+      <div class="cpu-image">
+        <img src="./assets/s1.jpg" alt="CPU Image">
+      </div>
+      <!-- CPU description and information -->
+      <div class="cpu-details">
+        <table>
+          <tr>
+            <td class="description-label">Manufacturer:</td>
+            <td>{{ .Manufacturer }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Model:</td>
+            <td>{{ .Main.Model }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Category:</td>
+            <td>{{ .Main.Category }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Generation:</td>
+            <td>{{ .Main.Generation }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Socket:</td>
+            <td>{{ .Main.Socket }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Cores:</td>
+            <td>{{ .Cores.Pcores }}P/{{ .Cores.Ecores }}E/{{ .Cores.Threads }}T</td>
+          </tr>
+          <tr>
+            <td class="description-label">Technical Process:</td>
+            <td>{{ .Cores.TechnicalProcess }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">RAM:</td>
+            <td>{{ .Ram.Type }} {{ .Ram.MaxFrequency }}MHz ({{ .Ram.MaxCapacity }})</td>
+          </tr>
+          <tr>
+            <td class="description-label">TDP:</td>
+            <td>{{ .Tdp }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Max Temperature:</td>
+            <td>{{ .MaxTemperature }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">Graphics:</td>
+            <td>{{ .Graphics }}</td>
+          </tr>
+          <tr>
+            <td class="description-label">PCI-E:</td>
+            <td>{{ .PciE }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div class="cpu-actions">
+      <form action="/comparisonCpuMb" method="post">
+        <button type="submit" name="mb" value="{{.Main.Socket}}" class="compare-button">Motherboard</button>
+      </form>
+      <form action="/comparisonCpuRam" method="post">
+        <button type="submit" name="ram" value="{{.Ram.Type}}" class="compare-button">RAM</button>
+      </form>
+      <form action="/comparisonCpuCooling" method="post">
+        <button type="submit" name="cooling" value="{{.Tdp}}" class="compare-button">Cooling</button>
+      </form>
+    </div>
+  </div>
+    {{ end }}
+  </div>
+</main>
+</body>
+</html>

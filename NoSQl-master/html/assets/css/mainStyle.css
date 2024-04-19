@@ -1,0 +1,272 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+header {
+    background-color: #1a237e;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+nav ul li.catalog-button {
+    background-color: #1565c0;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+nav ul li.catalog-button:hover {
+    background-color: #0d47a1;
+}
+
+nav ul li.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: #ddd;
+}
+
+main {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+#filters {
+    width: 250px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#filters h2 {
+    margin-top: 0;
+    color: #1a237e;
+}
+
+#filters div {
+    margin-bottom: 15px;
+}
+
+#results {
+    flex-grow: 1;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#results h2 {
+    margin-top: 0;
+    color: #1a237e;
+}
+
+#cpu-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.cpu-card {
+    position: relative; /* Required for absolute positioning */
+    width: 80%;
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+}
+
+.cpu-image {
+    flex: 0 0 auto;
+    width: 150px;
+    height: 150px;
+    margin-right: 20px;
+}
+
+.cpu-image img {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.cpu-details {
+    flex: 1;
+    position: relative; /* Required for absolute positioning */
+}
+
+.product-name {
+    margin-top: 0;
+}
+
+.price {
+    position: absolute; /* Position the price absolutely */
+    top: 0px; /* Adjust top position */
+    right: 10px; /* Adjust right position */
+    font-weight: bold;
+}
+
+.cpu-info p {
+    margin: 5px 0;
+}
+
+.cpu-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 55px;
+}
+
+.cpu-actions button {
+    margin-left: 10px;
+}
+
+.buy-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.compare-button {
+    background-color: #1565c0;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Search bar */
+#search-bar {
+    flex-grow: 1;
+    margin: 0 20px;
+}
+
+#search-input {
+    padding: 8px;
+    width: 400px; /* Increased width */
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+#search-button {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Additional CSS for CPU List Page */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    color: #333;
+}
+
+tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.product-name {
+    margin-top: 0;
+}
+
+.price {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-weight: bold;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.button-container button {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.button-container .buy-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.button-container .compare-button {
+    background-color: #1565c0;
+    color: white;
+}

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Protected Page</title>
+</head>
+<body>
+<h1>Welcome to the protected page!</h1>
+<p>Welcome, {{.Name}}!</p>
+<form method="post" action="/logout">
+  <input type="submit" value="Logout">
+</form>
+  <form method="post" action="/shop">
+    <button type="submit" value="Shop">Shop</button>
+    </form>
+</body>
+</html>

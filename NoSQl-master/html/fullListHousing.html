@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Full list of products</title>
+</head>
+<body>
+<tbody>
+{{ range . }}
+  <tr>
+    <td>{{ .Manufacturer }}</td>
+    <td>{{ .Model  }}</td>
+    <td>{{ .FormFactor   }}</td>
+    <td>{{.DriveBays.D35}}</td>
+    <td>{{.DriveBays.D25}}</td>
+    <td>{{ .MbFormFactor  }}</td>
+    <td>{{ .PsFormFactor }}</td>
+    <td>{{ .ExpansionSlots }}</td>
+    <td>{{ .GraphicCardSize  }}</td>
+    <td>{{ .CoolerHeight   }}</td>
+    {{ range .Size }}
+      <li>{{.}} mm</li>
+    {{ end }}
+    <td>{{ .Weight  }} kg</td>
+  </tr>
+{{ end }}
+</tbody>
+</body>
+</html>

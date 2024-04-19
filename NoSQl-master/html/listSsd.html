@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of products</title>
+</head>
+<body>
+<tbody>
+{{ range . }}
+    <tr>
+        <td>{{ .Manufacturer }}</td>
+        <td>{{ .Model  }}</td>
+        <td>{{ .Type   }}</td>
+        <form method="post" action="/fullListSsd" method="post">
+            <button name="ssdbtn" type="submit" id="{{.ID}}" value="{{.ID}}">Full</button>
+        </form>
+        <br></br>
+    </tr>
+{{ end }}
+</tbody>
+</body>
+</html>

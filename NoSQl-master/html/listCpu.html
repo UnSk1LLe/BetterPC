@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Search</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="#" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="#">CPU</a>
+                        <a href="#">GPU</a>
+                        <a href="#">Motherboards</a>
+                        <a href="#">RAM</a>
+                        <a href="#">Power supply</a>
+                        <a href="#">SSD</a>
+                        <a href="#">HDD</a>
+                        <a href="#">Air Cooling</a>
+                        <a href="#">Water Cooling</a>
+                        <a href="#">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search CPUs...">
+            <button id="search-button">Search</button>
+        </div>
+        <div id="user-panel">
+            <a href="#"><img src="cart_icon.png" alt="Shopping Cart"></a>
+            <a href="#"><img src="account_icon.png" alt="User Account"></a>
+        </div>
+    </nav>
+</header>
+<main>
+    <div id="filters">
+        <h2>Filters</h2>
+        <div>
+            <label>Manufacturer:</label><br>
+            <input type="checkbox" id="manufacturer-amd" value="amd">
+            <label for="manufacturer-amd">AMD</label><br>
+            <input type="checkbox" id="manufacturer-intel" value="intel">
+            <label for="manufacturer-intel">Intel</label>
+        </div>
+        <div>
+            <label>Model:</label><br>
+            <input type="checkbox" id="model-i3" value="i3">
+            <label for="model-i3">i3</label><br>
+            <input type="checkbox" id="model-i5" value="i5">
+            <label for="model-i5">i5</label><br>
+            <input type="checkbox" id="model-i7" value="i7">
+            <label for="model-i7">i7</label><br>
+            <input type="checkbox" id="model-i9" value="i9">
+            <label for="model-i9">i9</label><br>
+            <input type="checkbox" id="model-r5" value="r5">
+            <label for="model-r5">Ryzen 5</label><br>
+            <input type="checkbox" id="model-r7" value="r7">
+            <label for="model-r7">Ryzen 7</label><br>
+            <input type="checkbox" id="model-r9" value="r9">
+            <label for="model-r9">Ryzen 9</label>
+        </div>
+        <div>
+            <label>Number of Cores:</label><br>
+            <input type="checkbox" id="cores-2" value="2">
+            <label for="cores-2">2</label><br>
+            <input type="checkbox" id="cores-4" value="4">
+            <label for="cores-4">4</label><br>
+            <input type="checkbox" id="cores-6" value="6">
+            <label for="cores-6">6</label><br>
+            <input type="checkbox" id="cores-8" value="8">
+            <label for="cores-8">8</label><br>
+            <!-- Add more cores options as needed -->
+        </div>
+        <div>
+            <label>Price:</label><br>
+            <input type="number" id="price-from" placeholder="From"><br>
+            <input type="number" id="price-to" placeholder="To">
+        </div>
+        <div>
+            <label>RAM Type:</label><br>
+            <input type="checkbox" id="ram-ddr4" value="ddr4">
+            <label for="ram-ddr4">DDR4</label><br>
+            <input type="checkbox" id="ram-ddr5" value="ddr5">
+            <label for="ram-ddr5">DDR5</label>
+        </div>
+        <div>
+            <label>Socket:</label><br>
+            <input type="checkbox" id="socket-am4" value="am4">
+            <label for="socket-am4">AM4</label><br>
+            <!-- Add more socket options as needed -->
+        </div>
+        <div>
+            <label>PCI-E Version:</label><br>
+            <input type="checkbox" id="pcie-3.0" value="3.0">
+            <label for="pcie-3.0">3.0</label><br>
+            <input type="checkbox" id="pcie-4.0" value="4.0">
+            <label for="pcie-4.0">4.0</label><br>
+            <input type="checkbox" id="pcie-5.0" value="5.0">
+            <label for="pcie-5.0">5.0</label>
+        </div>
+        <div>
+            <label>Integrated Graphics:</label><br>
+            <input type="checkbox" id="integrated-graphics-yes" value="yes">
+            <label for="integrated-graphics-yes">Yes</label><br>
+            <input type="checkbox" id="integrated-graphics-no" value="no">
+            <label for="integrated-graphics-no">No</label>
+        </div>
+    </div>
+    <div id="results">
+        <div id="sort">
+            <label for="sort-price">Sort by Price:</label>
+            <select id="sort-price">
+                <option value="asc">Low to High</option>
+                <option value="desc">High to Low</option>
+            </select>
+        </div>
+        <h2>Results</h2>
+        <div id="cpu-list">
+            {{ range . }}
+            <div class="cpu-card">
+                <div class="cpu-image">
+                    <img src="./assets/s1.jpg" alt="CPU Image">
+                </div>
+                <div class="cpu-details">
+                    <h3 class="product-name">{{ .Main.Category  }} {{ .Main.Model }}</h3>
+                    <div class="cpu-info">
+                        <p>{{ .Main.Generation  }} generation, {{ .Main.Socket  }}, Cores: {{ .Cores.Pcores }}+{{ .Cores.Ecores }},
+                             {{ .Cores.Threads  }} Threads, {{ .Cores.TechnicalProcess }}nm, {{range .ClockFrequency.Pcores}} {{.}} GHz {{end}},
+                            {{ .Ram.Channels }} RAM channels, {{ .Tdp }}W, released in {{ .Main.Year }}</p>
+                    </div>
+                    <div class="cpu-actions">
+                        <form method="post" action="/fullListCpu" method="post">
+                            <button class="buy-button" name="ssdbtn" type="submit" value="{{.ID}}">Full</button>
+                        </form>
+                        <form method="post" action="/modifyCpuForm" method="post">
+                            <button class="compare-button" name="modify" type="submit" value="{{.ID}}">Modify</button>
+                        </form>
+                    </div>
+                    <p class="price">{{ .Price }} ₸</p> <!-- Move the price here -->
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration Form</title>
+  <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+  <link rel="stylesheet" href="./assets/css/login.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="card">
+  <h1>Registration Form</h1>
+  <form action="#" method="post" class="registration-form">
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+    <div class="form-group">
+      <label for="surname">Surname:</label>
+      <input type="text" id="surname" name="surname" required>
+    </div>
+    <div class="form-group">
+      <label for="dob">Date of Birth:</label>
+      <input type="date" id="dob" name="dob" min="1900-01-01" max="2024-12-31 "required>
+    </div>
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" oninput="passwordComplexityCheck()" required>
+    </div>
+    <div class="row">
+      <div class="col-auto">
+        <div class="progress" style="margin: 5px; width: 175px; height: 15px; color: yellow;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="passwordIndicator" style="width: 0%;"></div>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div id="passwordStatus"></div>
+      </div>
+      <warning id="warn"></warning>
+    </div>
+    <div class="form-group">
+      <label for="confirm-password">Confirm Password:</label>
+      <input type="password" id="confirm-password" name="confirm-password" required>
+    </div>
+    <button type="submit" id="registerButton" class="submit-button" disabled>Register</button>
+  </form>
+  <div class="login-link">
+    <a id="haveAcc" href="/login">Already have an account?</a>
+  </div>
+</div>
+<script src="./assets/js/regis.js"></script>
+<script>
+  document.addEventListener("input", function () {
+    const name = document.getElementById("name").value;
+    const surname = document.getElementById("surname").value;
+    const email = document.getElementById("email").value;
+    const dob = document.getElementById("dob").value;
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirm-password").value;
+    const registerButton = document.getElementById("registerButton");
+
+    if (name && surname && email && dob && password && confirmPassword && password === confirmPassword) {
+      registerButton.disabled = false;
+    } else {
+      registerButton.disabled = true;
+    }
+  });
+
+  var today = new Date();
+
+  // Format today's date as YYYY-MM-DD
+  var yyyy = today.getFullYear();
+  var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+  var dd = String(today.getDate()).padStart(2, '0');
+  var maxDate = yyyy + '-' + mm + '-' + dd;
+
+  // Set the max attribute of the date input field to today's date
+  document.getElementById("dob").max = maxDate;
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Object Chooser</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="radio"] {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>Choose an Object</h1>
+<form action="/listCpu" method="post">
+    <button name="element"  id="cpu" value="cpu" type="submit" >CPU</button>
+</form>
+    <form action="/listCooling" method="post">
+    <button name="element" id="cooling" value="cooling" type="submit">Cooling</button>>
+</form>
+<form action="/listHdd" method="post">
+    <button name="element"  id="hdd" value="hdd" type="submit" >HDD</button>
+</form>
+<form action="/listHousing" method="post">
+    <button name="element"  id="housing" value="housing" type="submit" >Housing</button>
+</form>
+<form action="/listRam" method="post">
+    <button name="element"  id="ram" value="ram" type="submit" >RAM</button>
+</form>
+<form action="/listMotherboard" method="post">
+    <button name="element"  id="motherboard" value="motherboard" type="submit" >MotherBoard</button>
+</form>
+<form action="/listSsd" method="post">
+    <button name="element"  id="ssd" value="ssd" type="submit" >SSD</button>
+</form>
+<form action="/listPowersupply" method="post">
+    <button name="element"  id="powersupply" value="powersupply" type="submit" >Power Supply</button>
+</form>
+<form action="/listGpu" method="post">
+    <button name="element"  id="gpu" value="gpu" type="submit" >GPU</button>
+</form>
+</body>
+</html>

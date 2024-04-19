@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Full list of products</title>
+</head>
+<body>
+
+<form action="/modifyCpu" method="post">
+    {{ range . }}
+    <p>{{.ID}}</p>
+    <p>Manufacturer</p>
+    <input type="text" name="man" value="{{.Manufacturer}}" required>
+    <p>Model</p>
+    <input type="text" name="model" value="{{.Model}}" required>
+    <p>Cores</p>
+    <input type="text" name="cores" value="{{.Cores}}" required>
+    <p>Threads</p>
+    <input type="text" name="threads" value="{{.Threads}}" required>
+    <p>Clock Frequency</p>
+    <div>
+        <p>Base</p>
+        <input type="text" name="base" value="{{index .ClockFrequency 0}}" required>
+        <span>GHz</span>
+        <p>Turbo-boost</p>
+        <input type="text" name="turbo" value="{{index .ClockFrequency 1}}" required>
+        <span>GHz</span>
+    </div>
+    <p>Socket</p>
+    <input type="text" name="socket" value="{{.Socket}}" required>
+    <p>Ram</p>
+    <div>
+        <p>Type</p>
+        <input type="text" name="type" value="{{.Ram.Type}}" required>
+        <p>Max Frequency</p>
+        <input type="text" name="maxFr" value="{{.Ram.MaxFrequency}}" required>
+        <span>MHz</span>
+        <p>Max Capacity</p>
+        <input type="text" name="maxCap" value="{{.Ram.MaxCapacity}}" required>
+        <span>GB</span>
+    </div>
+    <p>TDP</p>
+    <input type="text" name="tdp" value="{{.Tdp}}" required>
+    <span>W</span>
+    <p>PciE</p>
+    <input type="text" name="pcie" value="{{.PciE}}" required>
+    <p>Max Temperature</p>
+    <input type="text" name="maxTemp" value="{{.MaxTemperature}}" required>
+    <span>°C</span>
+    <button type="submit" name="modifyCpu" value="{{.ID}}">Update</button>
+</form>
+
+<form action="/deleteCpu" method="post">
+    <button type="submit" name="deleteCpu" value="{{.ID}}">Delete</button>
+</form>
+{{ end }}
+
+</body>
+</html>
