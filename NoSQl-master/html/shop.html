@@ -3,70 +3,37 @@
 <head>
     <title>Object Chooser</title>
     <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
-    <style>
-        h1 {
-            text-align: center;
-        }
-
-    </style>
 </head>
 <body>
 <h1>Choose an Object</h1>
 <div class="container">
-    <form action="/listCpu" method="post" class="catalog-card">
-        <button name="element" value="cpu" type="submit" >
-            <img src="./assets/cpu.png" alt="CPU">
-            <p>CPU</p>
-        </button>
-    </form>
-    <form action="/listCooling" method="post" class="catalog-card">
-        <button name="element" value="cooling" type="submit">
-            <img src="./assets/cooling.png" alt="Cooling">
-            <p>Cooling</p>
-        </button>
-    </form>
-    <form action="/listHdd" method="post" class="catalog-card">
-        <button name="element" value="hdd" type="submit" >
-            <img src="./assets/hdd.png" alt="HDD">
-            <p>HDD</p>
-        </button>
-    </form>
-    <form action="/listHousing" method="post" class="catalog-card">
-        <button name="element" value="housing" type="submit" >
-            <img src="./assets/housing.png" alt="Housing">
-            <p>Housing</p>
-        </button>
-    </form>
-    <form action="/listRam" method="post" class="catalog-card">
-        <button name="element" value="ram" type="submit" >
-            <img src="./assets/ram.png" alt="RAM">
-            <p>RAM</p>
-        </button>
-    </form>
-    <form action="/listMotherboard" method="post" class="catalog-card">
-        <button name="element" value="motherboard" type="submit" >
-            <img src="./assets/motherboard.png" alt="Motherboard">
-            <p>Motherboard</p>
-        </button>
-    </form>
-    <form action="/listSsd" method="post" class="catalog-card">
-        <button name="element" value="ssd" type="submit" >
-            <img src="./assets/ssd.png" alt="SSD">
-            <p>SSD</p>
-        </button>
-    </form>
-    <form action="/listPowersupply" method="post" class="catalog-card">
-        <button name="element" value="powersupply" type="submit" >
-            <img src="./assets/powersupply.png" alt="Power Supply">
-            <p>Power Supply</p>
-        </button>
-    </form>
-    <form action="/listGpu" method="post" class="catalog-card">
-        <button name="element" value="gpu" type="submit" >
-            <img src="./assets/gpu.png" alt="GPU">
-            <p>GPU</p>
-        </button>
-    </form>
+    <a href="/listProducts?element=cpu" class="catalog-card">
+        <img src="./assets/icons/cpu.png" alt="CPU">CPU
+    </a>
+    <a href="/listProducts?element=cooling" class="catalog-card">
+        <img src="./assets/icons/cooling.png" alt="COOLING">Cooling
+    </a>
+    <a href="/listProducts?element=hdd" class="catalog-card">
+        <img src="./assets/icons/hdd.png" alt="HDD">HDD
+    </a>
+    <a href="/listProducts?element=housing" class="catalog-card">
+        <img src="./assets/icons/housing.png" alt="HOUSING">Housing
+    </a>
+    <a href="/listProducts?element=ram" class="catalog-card">
+        <img src="./assets/icons/ram.png" alt="RAM">RAM
+    </a>
+    <a href="/listProducts?element=motherboard" class="catalog-card">
+        <img src="./assets/icons/motherboard.png" alt="MOTHERBOARD">Motherboard
+    </a>
+    <a href="/listProducts?element=ssd" class="catalog-card">
+        <img src="./assets/icons/ssd.png" alt="SSD">SSD
+    </a>
+    <a href="/listProducts?element=powersupply" class="catalog-card">
+        <img src="./assets/icons/powersupply.png" alt="POWER SUPPLY">Power Supply
+    </a>
+    <a href="/listProducts?element=gpu" class="catalog-card">
+        <img src="./assets/icons/gpu.png" alt="GPU">GPU
+    </a>
 </div>
 </body>
 </html>

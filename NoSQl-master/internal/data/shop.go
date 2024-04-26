@@ -16,9 +16,9 @@ type Cpu struct {
 	Graphics       string             `bson:"graphics" json:"graphics,omitempty"`
 	PciE           int                `bson:"pci-e" json:"pci_e,omitempty"`
 	MaxTemperature int                `bson:"max_temperature"`
-	Price          int                `bson:"price"`
-	Discount       int                `bson:"discount"`
-	Amount         int                `bson:"amount"`
+	Price          int                `bson:"price" json:"price,omitempty"`
+	Discount       int                `bson:"discount" json:"discount,omitempty"`
+	Amount         int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type MainCpu struct {
@@ -61,6 +61,9 @@ type Motherboard struct {
 	PciStandard  int                `bson:"pci_standard"`
 	MbPower      int                `bson:"mb_power"`
 	CpuPower     int                `bson:"cpu_power"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type ramMb struct {
@@ -93,6 +96,9 @@ type Ram struct {
 	Voltage      float64            `bson:"voltage"`
 	Cooling      string             `bson:"cooling"`
 	Height       int                `bson:"height"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Ssd struct {
@@ -107,8 +113,11 @@ type Ssd struct {
 	Write        int                `bson:"write"`
 	FormFactor   string             `bson:"form_factor"`
 	Mftb         float64            `bson:"mftb"`
-	Size         []int              `bson:"size"`
+	Size         []float64          `bson:"size"`
 	Weight       int                `bson:"weight"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Hdd struct {
@@ -123,8 +132,11 @@ type Hdd struct {
 	SpindleSpeed int                `bson:"spindle_speed"`
 	FormFactor   string             `bson:"form_factor"`
 	Mftb         int                `bson:"mftb"`
-	Size         []int              `bson:"size"`
+	Size         []float64          `bson:"size"`
 	Weight       int                `bson:"weight"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Gpu struct {
@@ -144,6 +156,9 @@ type Gpu struct {
 	PowerSupply   []int              `bson:"power_supply"`
 	Slots         float64            `bson:"slots"`
 	Size          []int              `bson:"size"`
+	Price         int                `bson:"price" json:"price,omitempty"`
+	Discount      int                `bson:"discount" json:"discount,omitempty"`
+	Amount        int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type memoryGpu struct {
@@ -176,6 +191,9 @@ type Cooling struct {
 	MountType    string             `bson:"mount_type"`
 	Power        int                `bson:"power"`
 	Height       int                `bson:"height"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Housing struct {
@@ -191,6 +209,9 @@ type Housing struct {
 	CoolerHeight    int                `bson:"cooler_height"`
 	Size            []int              `bson:"size"`
 	Weight          float64            `bson:"weight"`
+	Price           int                `bson:"price" json:"price,omitempty"`
+	Discount        int                `bson:"discount" json:"discount,omitempty"`
+	Amount          int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type driveBays struct {
@@ -208,6 +229,9 @@ type PowerSupply struct {
 	Modules      bool               `bson:"modules"`
 	MbPower      int                `bson:"mb_power"`
 	CpuPower     bsoncore.Array     `bson:"cpu_power"`
+	Price        int                `bson:"price" json:"price,omitempty"`
+	Discount     int                `bson:"discount" json:"discount,omitempty"`
+	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type connectors struct {
@@ -215,3 +239,11 @@ type connectors struct {
 	Molex int   `bson:"MOLEX"`
 	PciE  []int `bson:"PCI_E"`
 }
+
+type general struct {
+	Price    int `bson:"price"`
+	Discount int `bson:"discount"`
+	Amount   int `bson:"amount"`
+}
+
+//TODO change general

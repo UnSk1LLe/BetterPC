@@ -2,6 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    padding-top: 65px;
     background-color: #f2f2f2;
 }
 
@@ -12,11 +13,19 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000; /* Ensure it appears above other elements */
 }
 
 nav {
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    width: 100%;
+    margin-left: 40px;
+    margin-right: 40px;
 }
 
 nav ul {
@@ -54,7 +63,7 @@ nav ul li.dropdown:hover .dropdown-content {
     position: absolute;
     background-color: #f9f9f9;
     min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
     z-index: 1;
 }
 
@@ -89,7 +98,12 @@ main {
 }
 
 #filters div {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+#filters label {
+    display: inline-block; /* Display labels inline */
+    margin-right: 10px; /* Add some space between checkbox and label */
 }
 
 #results {
@@ -133,7 +147,7 @@ main {
     width: 100%;
     height: 100%;
     border-radius: 5px;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .cpu-details {
@@ -147,7 +161,7 @@ main {
 
 .price {
     position: absolute; /* Position the price absolutely */
-    top: 0px; /* Adjust top position */
+    top: 0; /* Adjust top position */
     right: 10px; /* Adjust right position */
     font-weight: bold;
 }
@@ -189,25 +203,31 @@ main {
 /* Search bar */
 #search-bar {
     flex-grow: 1;
-    margin: 0 20px;
+    text-align: center; /* Center-align search bar */
+    width: 700px;
 }
 
 #search-input {
     padding: 8px;
-    width: 400px; /* Increased width */
+    left: 70px;
+    width: 700px; /* Increased width */
     border-radius: 5px;
     border: 1px solid #ccc;
     font-size: 16px;
 }
 
 #search-button {
-    padding: 8px 15px;
-    border-radius: 5px;
-    border: none;
-    background-color: #4CAF50;
-    color: white;
-    font-size: 16px;
+    position: relative;
+    right: 47px;
+    top: 6px;
     cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: none;
+}
+
+#search-button:hover {
+    background-color: rgba(26, 35, 126, 0.2); /* Change the background color on hover */
 }
 
 /* Additional CSS for CPU List Page */
@@ -381,6 +401,7 @@ select {
     padding-left: 15%;
     gap: 40px;
 }
+
 .catalog-card {
     width: 300px;
     height: 300px;
@@ -391,17 +412,59 @@ select {
     justify-content: center;
     align-items: center;
     transition: all 0.3s ease;
+    text-decoration: none; /* Remove hyperlink underline */
+    color: black; /* Change text color */
 }
+
 .catalog-card:hover {
     transform: scale(1.05);
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
+
 .catalog-card img {
-    width: 100%;
-    height: 200px;
+    width: 200px; /* Adjust image width */
+    height: 200px; /* Maintain aspect ratio */
 }
-.catalog-card p {
+
+.catalog-card a {
     margin-top: 10px;
     font-weight: bold;
     text-align: center;
+    color: black; /* Change link text color */
+}
+
+#add-panel {
+    display: inline-flex;
+    width: 200px;
+}
+
+/* Add styles for the user container */
+.user-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.2); /* Adjust background color and opacity */
+}
+
+#shopping-cart {
+    gap: 5px;
+    padding: 5px;
+    padding-right: 30px;
+}
+
+#shopping-cart img,
+#search-button img,
+.user-container img {
+    width: 25px; /* Adjust icon size */
+    height: 25px;
+}
+
+.user-container span {
+    color: #fff; /* Adjust text color */
+    font-size: 14px; /* Adjust font size */
+    margin-left: 5px;
 }

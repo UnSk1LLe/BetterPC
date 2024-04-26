@@ -1,22 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>List of products</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motherboard Search</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
 </head>
 <body>
-<tbody>
-{{ range . }}
-  <tr>
-    <td>{{ .Manufacturer }}</td>
-    <td>{{ .Model  }}</td>
-    <td>{{ .Socket   }}</td>
-    <form method="post" action="/fullListMotherboard" method="post">
-      <button name="ssdbtn" type="submit" id="{{.ID}}" value="{{.ID}}">Full</button>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?element=cpu">CPU</a>
+                        <a href="/listProducts?element=gpu">GPU</a>
+                        <a href="/listProducts?element=motherboard">Motherboards</a>
+                        <a href="/listProducts?element=ram">RAM</a>
+                        <a href="/listProducts?element=powersupply">Power supply</a>
+                        <a href="/listProducts?element=ssd">SSD</a>
+                        <a href="/listProducts?element=hdd">HDD</a>
+                        <a href="/listProducts?element=cooling"><!---Air--->Cooling</a>
+                        <!---<a href="/listProducts?element=watercooling">Water Cooling</a>--->
+                        <a href="/listProducts?element=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart">
+                <a href="#"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ index . 1 }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<main>
+    <form action="/cpuFilters" method="post">
+        <div id="filters">
+            <h2>Filters</h2>
+            <div>
+                <label>Manufacturer:</label><br>
+                <input type="checkbox" id="manufacturer-amd" name="manufacturer" value="AMD">
+                <label for="manufacturer-amd">AMD</label><br>
+                <input type="checkbox" id="manufacturer-intel" name="manufacturer" value="Intel">
+                <label for="manufacturer-intel">Intel</label>
+            </div>
+            <div>
+                <label>Category:</label><br>
+                <input type="checkbox" id="model-i3" name="category" value="Intel Core i3">
+                <label for="model-i3">i3</label><br>
+                <input type="checkbox" id="model-i5" name="category" value="Intel Core i5">
+                <label for="model-i5">i5</label><br>
+                <input type="checkbox" id="model-i7" name="category" value="Intel Core i7">
+                <label for="model-i7">i7</label><br>
+                <input type="checkbox" id="model-i9" name="category" value="Intel Core i9">
+                <label for="model-i9">i9</label><br>
+                <input type="checkbox" id="model-r5" name="category" value="AMD Ryzen 5">
+                <label for="model-r5">Ryzen 5</label><br>
+                <input type="checkbox" id="model-r7" name="category" value="AMD Ryzen 7">
+                <label for="model-r7">Ryzen 7</label><br>
+                <input type="checkbox" id="model-r9" name="category" value="AMD Ryzen 9">
+                <label for="model-r9">Ryzen 9</label>
+            </div>
+            <div>
+                <label>Number of Cores:</label><br>
+                <input type="checkbox" id="cores-2" name="cores" value="2">
+                <label for="cores-2">2</label><br>
+                <input type="checkbox" id="cores-4" name="cores" value="4">
+                <label for="cores-4">4</label><br>
+                <input type="checkbox" id="cores-6" name="cores" value="6">
+                <label for="cores-6">6</label><br>
+                <input type="checkbox" id="cores-8" name="cores" value="8">
+                <label for="cores-8">8</label><br>
+                <!-- Add more cores options as needed -->
+            </div>
+            <div>
+                <label>Price:</label><br>
+                <input type="number" id="price-from" name="price-from" placeholder="From"><br>
+                <input type="number" id="price-to" name="price-to" placeholder="To">
+            </div>
+            <div>
+                <label>RAM Type:</label><br>
+                <input type="checkbox" id="ram-ddr4" name="ram-type" value="DDR4">
+                <label for="ram-ddr4">DDR4</label><br>
+                <input type="checkbox" id="ram-ddr5" name="ram-type" value="DDR5">
+                <label for="ram-ddr5">DDR5</label>
+            </div>
+            <div>
+                <label>Socket:</label><br>
+                <input type="checkbox" id="socket-am4" name="socket" value="AM4">
+                <label for="socket-am4">AM4</label><br>
+                <!-- Add more socket options as needed -->
+            </div>
+            <div>
+                <label>PCI-E Version:</label><br>
+                <input type="checkbox" id="pcie-3.0" name="pcie-version" value="3">
+                <label for="pcie-3.0">3.0</label><br>
+                <input type="checkbox" id="pcie-4.0" name="pcie-version" value="4">
+                <label for="pcie-4.0">4.0</label><br>
+                <input type="checkbox" id="pcie-5.0" name="pcie-version" value="5">
+                <label for="pcie-5.0">5.0</label>
+            </div>
+            <div>
+                <label>Integrated Graphics:</label><br>
+                <input type="checkbox" id="integrated-graphics-yes" name="integrated-graphics" value="yes">
+                <label for="integrated-graphics-yes">Yes</label><br>
+                <input type="checkbox" id="integrated-graphics-no" name="integrated-graphics" value="no">
+                <label for="integrated-graphics-no">No</label>
+            </div>
+        </div>
+        <button class="submit-button" name="cpuFormFilters" type="submit">Apply</button>
     </form>
-    <br></br>
-  </tr>
-{{ end }}
-</tbody>
+    <div id="results">
+        <div id="sort">
+            <label for="sort-price">Sort by Price:</label>
+            <select id="sort-price">
+                <option value="asc">Low to High</option>
+                <option value="desc">High to Low</option>
+            </select>
+        </div>
+        <h2>Results</h2>
+        <div id="cpu-list">
+            {{ range $index, $item := index . 0 }}
+            <div class="cpu-card">
+                <div class="cpu-image">
+                    <img src="assets/icons/m1.jpg" alt="CPU Image">
+                </div>
+                <div class="cpu-details">
+                    <h3 class="product-name">{{  $item.Manufacturer  }} {{  $item.Model }}</h3>
+                    <div class="cpu-info">
+                        <p>{{  $item.Model  }}, {{  $item.Socket  }}, {{  $item.Chipset }},
+                            {{  $item.FormFactor  }}, {{  $item.Ram.Slots }}, {{ $item.Ram.Type}},
+                            {{  $item.Ram.MaxFrequency }} MHz, {{  $item.Ram.MaxCapacity }} Gb,
+                            {{  $item.Interfaces }}, {{  $item.PciStandard }}, MB Power {{ $item.MbPower }}-pin
+                            CPU Power {{  $item.CpuPower }}-pin
+                        </p>
+                    </div>
+                    <div class="cpu-actions">
+                        <form method="post" action="/showProduct">
+                            <button class="buy-button" name="showProduct" type="submit" value="mbd{{.ID}}">Full</button>
+                        </form>
+                        <form method="post" action="/modifyProduct">
+                            <button class="compare-button" name="modifyProduct" type="submit" value="mbd{{.ID}}">Modify</button>
+                        </form>
+                        <form method="post" action="/addProductToCart">
+                            <button class="buy-button" name="showProduct" type="submit" value="mbd{{.ID}}">Buy</button>
+                        </form>
+                    </div>
+                    <p class="price">{{  $item.Price }} ₸</p>
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</main>
+
 </body>
 </html>

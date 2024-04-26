@@ -11,7 +11,6 @@
         <h1>Modify CPU</h1>
         <form action="/modifyCpu" method="post" class="cpu-form">
             {{ range . }}
-            {{ .ClockFrequency.Ecores }}
             <div class="form-group">
                 <label for="manufacturer">Manufacturer:</label>
                 <select id="manufacturer" name="man" required>
@@ -78,11 +77,11 @@
                 <label for="ecores">E-Cores:</label>
                 <div class="inline-inputs">
                     <div class="input-with-unit">
-                        <input type="number" id="ecoresBase" name="ecoresBase" min="0" step="0.1" required disabled>
+                        <input type="number" id="ecoresBase" name="ecoresBase" min="0" value="{{index .ClockFrequency.Ecores 0}}" step="0.1" required disabled>
                         <span class="unit">Base GHz</span>
                     </div>
                     <div class="input-with-unit">
-                        <input type="number" id="ecoresBoost" name="ecoresBoost" min="0" step="0.1" required disabled>
+                        <input type="number" id="ecoresBoost" name="ecoresBoost" min="0" value="{{index .ClockFrequency.Ecores 1}}" step="0.1" required disabled>
                         <span class="unit">Boost GHz</span>
                     </div>
                 </div>
@@ -159,7 +158,7 @@
             <div class="form-group">
                 <label for="discount">Discount:</label>
                 <div class="input-with-unit">
-                    <input type="number" id="discount" name="discount" min="0" max="100" value="0" value="{{.Discount}}" required>
+                    <input type="number" id="discount" name="discount" min="0" max="100" value="{{.Discount}}" required>
                     <span class="unit">%</span>
                 </div>
             </div>
@@ -173,8 +172,7 @@
         <form action="/deleteCpu" method="post">
             <button type="submit" class="delete-button" name="deleteCpu" value="{{.ID}}">Delete</button>
         </form>
-        <script>
-        </script>
+        <script src="./assets/js/modifyCpu.js"></script>
         {{ end }}
     </div>
 </main>

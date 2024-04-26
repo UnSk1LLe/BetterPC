@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+    <link rel="stylesheet" href="./assets/css/login.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="card">
+    <h1>Edit User Information</h1>
+    <form action="/editUserInfo" method="post" class="registration-form">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{.Name}}"required>
+        </div>
+        <div class="form-group">
+            <label for="surname">Surname:</label>
+            <input type="text" id="surname" name="surname" value="{{.Surname}}" required>
+        </div>
+        <div class="form-group">
+            <label for="dob">Date of Birth:</label>
+            <input type="date" id="dob" name="dob" min="1900-01-01" max="2024-12-31" value="{{.Dob}}" required>
+        </div>
+        <button type="submit" id="editUserInfoButton" name="editUserInfoButton" class="submit-button" value="{{.ID}}">Save</button>
+    </form>
+    <form action="/showUserProfile" method="post" class="registration-form">
+        <button type="submit" class="delete-button" name="cancel">Cancel</button>
+    </form>
+</div>
+<script>
+    // Assuming your date string is stored in a variable named dateString
+    var dateString = "{{.Dob}}";
+
+    // Extract the date part (YYYY-MM-DD) from the datetime string
+    var datePart = dateString.split(' ')[0];
+
+    // Set the value of the input element to the extracted date part
+    document.getElementById('dob').value = datePart;
+</script>
+<script>
+
+</script>
+</body>
+</html>

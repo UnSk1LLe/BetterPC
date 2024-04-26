@@ -2,38 +2,25 @@ package main
 
 import (
 	"MongoDb/Handlers"
-	"MongoDb/internal/data"
 	"MongoDb/pkg/logging"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 func main() {
 	logger := logging.GetLogger()
-	data.Init("test", "users")
 	logger.Info("Create route")
 	http.HandleFunc("/register", Handlers.Register)
 	http.HandleFunc("/login", Handlers.Login)
 	http.HandleFunc("/logout", Handlers.Logout)
 	http.HandleFunc("/home", Handlers.AuthMiddleware(Handlers.Home))
 	http.HandleFunc("/shop", Handlers.AuthMiddleware(Handlers.Shop))
-	http.HandleFunc("/fullListSsd", Handlers.AuthMiddleware(Handlers.ListSsd))
-	http.HandleFunc("/fullListCpu", Handlers.AuthMiddleware(Handlers.ListCpu))
-	http.HandleFunc("/fullListCooling", Handlers.AuthMiddleware(Handlers.ListCooling))
-	http.HandleFunc("/fullListHdd", Handlers.AuthMiddleware(Handlers.ListHdd))
-	http.HandleFunc("/fullListHousing", Handlers.AuthMiddleware(Handlers.ListHousing))
-	http.HandleFunc("/fullListRam", Handlers.AuthMiddleware(Handlers.ListRam))
-	http.HandleFunc("/fullListMotherboard", Handlers.AuthMiddleware(Handlers.ListMotherboard))
-	http.HandleFunc("/fullListPowerSupply", Handlers.AuthMiddleware(Handlers.ListPowerSupply))
-	http.HandleFunc("/fullListGpu", Handlers.AuthMiddleware(Handlers.ListGpu))
-	http.HandleFunc("/listCpu", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listCooling", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listHdd", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listHousing", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listRam", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listMotherboard", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listSsd", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listPowersupply", Handlers.AuthMiddleware(Handlers.List))
-	http.HandleFunc("/listGpu", Handlers.AuthMiddleware(Handlers.List))
+	http.HandleFunc("/showUserProfile", Handlers.AuthMiddleware(Handlers.ShowProfile))
+	http.HandleFunc("/editUserInfoForm", Handlers.AuthMiddleware(Handlers.EditUserInfoForm))
+	http.HandleFunc("/editUserInfo", Handlers.AuthMiddleware(Handlers.EditUserInfo))
+	http.HandleFunc("/showProduct", Handlers.AuthMiddleware(Handlers.ListProductInfo))
+	http.HandleFunc("/listProducts", Handlers.AuthMiddleware(Handlers.ListProducts))
+	http.HandleFunc("/cpuFilters", Handlers.AuthMiddleware(Handlers.FilterCpu))
 	http.HandleFunc("/comparisonCpuMb", Handlers.AuthMiddleware(Handlers.ComparisonCpuMb))
 	http.HandleFunc("/comparisonCpuRam", Handlers.AuthMiddleware(Handlers.ComparisonCpuRam))
 	http.HandleFunc("/comparisonCpuCooling", Handlers.AuthMiddleware(Handlers.ComparisonCpuCooling))
@@ -58,5 +45,8 @@ func main() {
 	handler := http.StripPrefix("/assets/", http.FileServer(http.Dir("html/assets")))
 	http.Handle("/assets/", handler)
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		logrus.Fatal()
+	}
 }
