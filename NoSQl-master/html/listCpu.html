@@ -160,7 +160,7 @@
                     <img src="assets/icons/s1.jpg" alt="CPU Image">
                 </div>
                 <div class="cpu-details">
-                    <h3 class="product-name">{{  $item.Main.Category  }} {{  $item.Main.Model }}</h3>
+                    <h3 class="product-name">{{  $item.Main.Category  }} {{  $item.General.Model }}</h3>
                     <div class="cpu-info">
                         <p>{{  $item.Main.Generation  }} generation, {{  $item.Main.Socket  }}, Cores: {{  $item.Cores.Pcores }}+{{  $item.Cores.Ecores }},
                              {{  $item.Cores.Threads  }} Threads, {{  $item.Cores.TechnicalProcess }}nm, {{range  $item.ClockFrequency.Pcores}} {{.}} GHz {{end}},
@@ -168,18 +168,18 @@
                     </div>
                     <div class="cpu-actions">
                         <form method="post" action="/showProduct">
-                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{.ID}}">Full</button>
+                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{$item..ID}}">Full</button>
                         </form>
                         <form method="post" action="/modifyCpuForm">
-                            <button class="compare-button" name="modifyProduct" type="submit" value="cpu{{.ID}}">Modify</button>
+                            <button class="compare-button" name="modifyProduct" type="submit" value="cpu{{$item..ID}}">Modify</button>
                         </form>
-                        <form method="post" action="/addProductToCart">
-                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{.ID}}">Buy</button>
-                        </form>
+                        <button id="addToCartButton" name="addToCartButton" class="buy-button" type="button" value="cpu{{$item.ID}}">Add to cart</button>
+                        <div id="outOfStockMessage" style="display: none;">Out of stock</div>
                     </div>
-                    <p class="price">{{  $item.Price }} ₸</p>
+                    <p class="price">{{  $item.General.Price }} ₸</p>
                 </div>
             </div>
+            <script src="./assets/js/listProducts.js"></script>
             {{ end }}
         </div>
         <form action="/addCpuForm" method="post">

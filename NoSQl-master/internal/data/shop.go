@@ -6,8 +6,8 @@ import (
 )
 
 type Cpu struct {
-	ID             primitive.ObjectID `bson:"_id" json:"_id,omitempty"`
-	Manufacturer   string             `bson:"manufacturer" json:"manufacturer,omitempty"`
+	ID             primitive.ObjectID `bson:"_id,omitempty"`
+	General        General            `bson:"general"`
 	Main           MainCpu            `bson:"main"`
 	Cores          CoresCpu           `bson:"cores"`
 	ClockFrequency ClockFrequencyCpu  `bson:"clock_frequency" json:"clock_frequency,omitempty"`
@@ -16,14 +16,10 @@ type Cpu struct {
 	Graphics       string             `bson:"graphics" json:"graphics,omitempty"`
 	PciE           int                `bson:"pci-e" json:"pci_e,omitempty"`
 	MaxTemperature int                `bson:"max_temperature"`
-	Price          int                `bson:"price" json:"price,omitempty"`
-	Discount       int                `bson:"discount" json:"discount,omitempty"`
-	Amount         int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type MainCpu struct {
 	Category   string `bson:"category" json:"category,omitempty"`
-	Model      string `bson:"model" json:"model,omitempty"`
 	Generation string `bson:"generation" json:"generation,omitempty"`
 	Socket     string `bson:"socket" json:"socket,omitempty"`
 	Year       int    `bson:"year" json:"year,omitempty"`
@@ -50,20 +46,16 @@ type RamCpu struct {
 }
 
 type Motherboard struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
-	Socket       string             `bson:"socket"`
-	Chipset      string             `bson:"chipset"`
-	FormFactor   string             `bson:"form_factor"`
-	Ram          ramMb              `bson:"ram"`
-	Interfaces   interfaces         `bson:"interfaces"`
-	PciStandard  int                `bson:"pci_standard"`
-	MbPower      int                `bson:"mb_power"`
-	CpuPower     int                `bson:"cpu_power"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	General     General            `bson:"general"`
+	Socket      string             `bson:"socket"`
+	Chipset     string             `bson:"chipset"`
+	FormFactor  string             `bson:"form_factor"`
+	Ram         ramMb              `bson:"ram"`
+	Interfaces  interfaces         `bson:"interfaces"`
+	PciStandard int                `bson:"pci_standard"`
+	MbPower     int                `bson:"mb_power"`
+	CpuPower    int                `bson:"cpu_power"`
 }
 
 type ramMb struct {
@@ -81,9 +73,8 @@ type interfaces struct {
 }
 
 type Ram struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	General      General            `bson:"general"`
 	Capacity     int                `bson:"capacity"`
 	Number       int                `bson:"number"`
 	FormFactor   string             `bson:"form_factor"`
@@ -96,34 +87,26 @@ type Ram struct {
 	Voltage      float64            `bson:"voltage"`
 	Cooling      string             `bson:"cooling"`
 	Height       int                `bson:"height"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Ssd struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
-	Type         string             `bson:"type"`
-	Capacity     int                `bson:"capacity"`
-	Interface    string             `bson:"interface"`
-	MemoryType   string             `bson:"memory_type"`
-	Read         int                `bson:"read"`
-	Write        int                `bson:"write"`
-	FormFactor   string             `bson:"form_factor"`
-	Mftb         float64            `bson:"mftb"`
-	Size         []float64          `bson:"size"`
-	Weight       int                `bson:"weight"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	General    General            `bson:"general"`
+	Type       string             `bson:"type"`
+	Capacity   int                `bson:"capacity"`
+	Interface  string             `bson:"interface"`
+	MemoryType string             `bson:"memory_type"`
+	Read       int                `bson:"read"`
+	Write      int                `bson:"write"`
+	FormFactor string             `bson:"form_factor"`
+	Mftb       float64            `bson:"mftb"`
+	Size       []float64          `bson:"size"`
+	Weight     int                `bson:"weight"`
 }
 
 type Hdd struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	General      General            `bson:"general"`
 	Type         string             `bson:"type"`
 	Capacity     int                `bson:"capacity"`
 	Interface    string             `bson:"interface"`
@@ -134,15 +117,11 @@ type Hdd struct {
 	Mftb         int                `bson:"mftb"`
 	Size         []float64          `bson:"size"`
 	Weight       int                `bson:"weight"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type Gpu struct {
-	ID            primitive.ObjectID `bson:"_id"`
-	Manufacturer  string             `bson:"manufacturer"`
-	Model         string             `bson:"model"`
+	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	General       General            `bson:"general"`
 	Architecture  string             `bson:"architecture"`
 	Memory        memoryGpu          `bson:"memory"`
 	GpuFrequency  int                `bson:"gpu_frequency"`
@@ -156,9 +135,6 @@ type Gpu struct {
 	PowerSupply   []int              `bson:"power_supply"`
 	Slots         float64            `bson:"slots"`
 	Size          []int              `bson:"size"`
-	Price         int                `bson:"price" json:"price,omitempty"`
-	Discount      int                `bson:"discount" json:"discount,omitempty"`
-	Amount        int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type memoryGpu struct {
@@ -179,27 +155,22 @@ type coolingGpu struct {
 }
 
 type Cooling struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
-	Type         string             `bson:"type"`
-	Sockets      []string           `bson:"sockets"`
-	Fans         []int              `bson:"fans"`
-	Rpm          []int              `bson:"rpm"`
-	Tdp          int                `bson:"tdp"`
-	NoiseLevel   int                `bson:"noise_level"`
-	MountType    string             `bson:"mount_type"`
-	Power        int                `bson:"power"`
-	Height       int                `bson:"height"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	General    General            `bson:"general"`
+	Type       string             `bson:"type"`
+	Sockets    []string           `bson:"sockets"`
+	Fans       []int              `bson:"fans"`
+	Rpm        []int              `bson:"rpm"`
+	Tdp        int                `bson:"tdp"`
+	NoiseLevel int                `bson:"noise_level"`
+	MountType  string             `bson:"mount_type"`
+	Power      int                `bson:"power"`
+	Height     int                `bson:"height"`
 }
 
 type Housing struct {
-	ID              primitive.ObjectID `bson:"_id"`
-	Manufacturer    string             `bson:"manufacturer"`
-	Model           string             `bson:"model"`
+	ID              primitive.ObjectID `bson:"_id,omitempty"`
+	General         General            `bson:"general"`
 	FormFactor      string             `bson:"form_factor"`
 	DriveBays       driveBays          `bson:"drive_bays"`
 	MbFormFactor    string             `bson:"mb_form_factor"`
@@ -209,9 +180,6 @@ type Housing struct {
 	CoolerHeight    int                `bson:"cooler_height"`
 	Size            []int              `bson:"size"`
 	Weight          float64            `bson:"weight"`
-	Price           int                `bson:"price" json:"price,omitempty"`
-	Discount        int                `bson:"discount" json:"discount,omitempty"`
-	Amount          int                `bson:"amount" json:"amount,omitempty"`
 }
 
 type driveBays struct {
@@ -220,18 +188,14 @@ type driveBays struct {
 }
 
 type PowerSupply struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	Manufacturer string             `bson:"manufacturer"`
-	Model        string             `bson:"model"`
-	FormFactor   string             `bson:"form_factor"`
-	OutputPower  int                `bson:"output_power"`
-	Connectors   connectors         `bson:"connectors"`
-	Modules      bool               `bson:"modules"`
-	MbPower      int                `bson:"mb_power"`
-	CpuPower     bsoncore.Array     `bson:"cpu_power"`
-	Price        int                `bson:"price" json:"price,omitempty"`
-	Discount     int                `bson:"discount" json:"discount,omitempty"`
-	Amount       int                `bson:"amount" json:"amount,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	General     General            `bson:"general"`
+	FormFactor  string             `bson:"form_factor"`
+	OutputPower int                `bson:"output_power"`
+	Connectors  connectors         `bson:"connectors"`
+	Modules     bool               `bson:"modules"`
+	MbPower     int                `bson:"mb_power"`
+	CpuPower    bsoncore.Array     `bson:"cpu_power"`
 }
 
 type connectors struct {
@@ -240,10 +204,10 @@ type connectors struct {
 	PciE  []int `bson:"PCI_E"`
 }
 
-type general struct {
-	Price    int `bson:"price"`
-	Discount int `bson:"discount"`
-	Amount   int `bson:"amount"`
+type General struct {
+	Manufacturer string `bson:"manufacturer"`
+	Model        string `bson:"model"`
+	Price        int    `bson:"price"`
+	Discount     int    `bson:"discount"`
+	Amount       int    `bson:"amount"`
 }
-
-//TODO change general

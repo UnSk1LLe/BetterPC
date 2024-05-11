@@ -16,7 +16,6 @@ import (
 //TODO 2 make single function for products list (DONE)
 //TODO make single delete, modify functions
 
-/*Shop function*/
 func Shop(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/shop.html"))
 	tmpl.Execute(w, data.ShowUser())
@@ -705,9 +704,16 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 			freeMult = true
 		}
 
+		general := data.General{
+			Manufacturer: r.FormValue("man"),
+			Model:        r.FormValue("model"),
+			Price:        price,
+			Discount:     discount,
+			Amount:       amount,
+		}
+
 		main := data.MainCpu{
 			Category:   r.FormValue("category"),
-			Model:      r.FormValue("model"),
 			Generation: r.FormValue("generation"),
 			Socket:     r.FormValue("socket"),
 			Year:       year,
@@ -735,7 +741,7 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 
 		recordCpu := data.Cpu{
 			ID:             primitive.NewObjectID(),
-			Manufacturer:   r.FormValue("man"),
+			General:        general,
 			Main:           main,
 			Cores:          cores,
 			ClockFrequency: clockFrequency,
@@ -744,9 +750,6 @@ func AddCpu(w http.ResponseWriter, r *http.Request) {
 			Graphics:       r.FormValue("graphics"),
 			PciE:           pcie,
 			MaxTemperature: maxTemp,
-			Price:          price,
-			Discount:       discount,
-			Amount:         amount,
 		}
 
 		_, err := data.Collection.InsertOne(context.TODO(), recordCpu)
@@ -834,9 +837,16 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 			freeMult = true
 		}
 
+		general := data.General{
+			Manufacturer: r.FormValue("man"),
+			Model:        r.FormValue("model"),
+			Price:        price,
+			Discount:     discount,
+			Amount:       amount,
+		}
+
 		main := data.MainCpu{
 			Category:   r.FormValue("category"),
-			Model:      r.FormValue("model"),
 			Generation: r.FormValue("generation"),
 			Socket:     r.FormValue("socket"),
 			Year:       year,
@@ -867,7 +877,7 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 
 		recordCpu := data.Cpu{
 			ID:             ObjID,
-			Manufacturer:   r.FormValue("man"),
+			General:        general,
 			Main:           main,
 			Cores:          cores,
 			ClockFrequency: clockFrequency,
@@ -876,13 +886,10 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 			Graphics:       r.FormValue("graphics"),
 			PciE:           pcie,
 			MaxTemperature: maxTemp,
-			Price:          price,
-			Discount:       discount,
-			Amount:         amount,
 		}
 
 		update := bson.M{"$set": bson.M{
-			"manufacturer":    recordCpu.Manufacturer,
+			"general":         recordCpu.General,
 			"main":            recordCpu.Main,
 			"cores":           recordCpu.Cores,
 			"clock_frequency": recordCpu.ClockFrequency,
@@ -891,9 +898,6 @@ func ModifyCpu(w http.ResponseWriter, r *http.Request) {
 			"graphics":        recordCpu.Graphics,
 			"pci-e":           recordCpu.PciE,
 			"max_temperature": recordCpu.MaxTemperature,
-			"price":           recordCpu.Price,
-			"discount":        recordCpu.Discount,
-			"amount":          recordCpu.Amount,
 		}}
 
 		_, err = data.Collection.UpdateOne(context.TODO(), filter, update)
@@ -1232,10 +1236,8 @@ func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
-	// Parse form values from the request
 	r.ParseForm()
 
-	// Define variables to store filter values
 	var manufacturers []string
 	var categories []string
 	var cores []int
@@ -1244,7 +1246,6 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	var sockets []string
 	var pcieVersions []float64
 
-	// Get filter values from form data
 	manufacturers = r.Form["manufacturer"]
 	categories = r.Form["category"]
 	coreValues := r.Form["cores"]
@@ -1367,7 +1368,6 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Render the filtered CPU data to a template and send it as response
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
 	logger.Infof("Found multiple items: %v", len(cpuItems))
 

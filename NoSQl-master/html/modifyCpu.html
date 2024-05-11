@@ -25,7 +25,7 @@
             </div>
             <div class="form-group">
                 <label for="model">Model:</label>
-                <input type="text" id="model" name="model" value="{{.Main.Model}}" required>
+                <input type="text" id="model" name="model" value="{{.General.Model}}" required>
             </div>
             <div class="form-group">
                 <label for="generation">Generation:</label>
@@ -150,7 +150,7 @@
             <div class="form-group">
                 <label for="price">Price:</label>
                 <div class="input-with-unit">
-                    <input type="number" id="price" name="price" min="0" value="{{.Price}}" required>
+                    <input type="number" id="price" name="price" min="0" value="{{.General.Price}}" required>
                     <span class="unit">₸</span>
                 </div>
             </div>
@@ -158,14 +158,14 @@
             <div class="form-group">
                 <label for="discount">Discount:</label>
                 <div class="input-with-unit">
-                    <input type="number" id="discount" name="discount" min="0" max="100" value="{{.Discount}}" required>
+                    <input type="number" id="discount" name="discount" min="0" max="100" value="{{.General.Discount}}" required>
                     <span class="unit">%</span>
                 </div>
             </div>
             <h2>Amount</h2>
             <div class="form-group">
                 <label for="amount">Amount:</label>
-                <input type="number" id="amount" name="amount" min="0" value="{{.Amount}}" required>
+                <input type="number" id="amount" name="amount" min="0" value="{{.General.Amount}}" required>
             </div>
             <button type="submit" class="update-button" name="modifyCpu" value="{{.ID}}">Update</button>
         </form>

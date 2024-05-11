@@ -4,6 +4,7 @@ import (
 	"MongoDb/internal/data"
 	"MongoDb/pkg/logging"
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -39,7 +40,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var count int64
+		/*var count int64
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		count, err = data.Collection.CountDocuments(ctx, bson.M{"email": email})
 		if err != nil {
@@ -47,6 +48,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if count > 0 {
+			http.Error(w, "Email already in use", http.StatusBadRequest)
+			return
+		}*/
+		var userReg data.User
+		userReg, err = data.GetUser(email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println(primitive.NilObjectID, " = ", userReg.ID, primitive.NilObjectID == userReg.ID)
+		if userReg.ID != primitive.NilObjectID {
 			http.Error(w, "Email already in use", http.StatusBadRequest)
 			return
 		}
@@ -66,7 +78,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			PasswordHash: hashedPassword,
 		}
 
-		ctx, _ = context.WithTimeout(context.Background(), 5*time.Second)
 		err = data.CreateUser(recordUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

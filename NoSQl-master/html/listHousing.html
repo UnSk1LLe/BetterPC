@@ -148,7 +148,7 @@
                     <img src="assets/icons/hs1.jpg" alt="CPU Image">
                 </div>
                 <div class="cpu-details">
-                    <h3 class="product-name">{{  $item.Manufacturer  }} {{  $item.Model }}</h3>
+                    <h3 class="product-name">{{  $item.General.Manufacturer  }} {{  $item.General.Model }}</h3>
                     <div class="cpu-info">
                         <p>
                             {{ $item.FormFactor }}, 3.5: {{ $item.DriveBays.D35 }}, 2.5: {{ $item.DriveBays.D25 }},
@@ -165,10 +165,10 @@
                             <button class="compare-button" name="modifyProduct" type="submit" value="pwr{{.ID}}">Modify</button>
                         </form>
                         <form method="post" action="/addProductToCart">
-                            <button class="buy-button" name="showProduct" type="submit" value="pwr{{.ID}}">Buy</button>
+                            <button class="buy-button" name="showProduct" type="submit" value="pwr{{.ID}}">Add to cart</button>
                         </form>
                     </div>
-                    <p class="price">{{  $item.Price }} ₸</p>
+                    <p class="price">{{  $item.General.Price }} ₸</p>
                 </div>
             </div>
             {{ end }}
