@@ -2,11 +2,14 @@ package Handlers
 
 import (
 	"MongoDb/internal/data"
+	"MongoDb/pkg/emailVerification"
 	"MongoDb/pkg/logging"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"net/http"
@@ -40,9 +43,16 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		verifiedEmail, err := emailVerification.IsVerifiedEmail(email)
+		logger.Infof("verified email: %v", verifiedEmail)
+		if err != nil || !verifiedEmail {
+			http.Error(w, "Invalid email", http.StatusBadRequest)
+			return
+		}
+
 		/*var count int64
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		count, err = data.Collection.CountDocuments(ctx, bson.M{"email": email})
+		count, err = data.Collection.CountDocuments(ctx, bson.M{"emailVerification": emailVerification})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -50,15 +60,15 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		if count > 0 {
 			http.Error(w, "Email already in use", http.StatusBadRequest)
 			return
-		}*/
-		var userReg data.User
-		userReg, err = data.GetUser(email)
-		if err != nil {
+		}*/ //oldMethod
+		var recordUser data.User
+		recordUser, err = data.GetUser(email)
+		if err != nil && err.Error() != "mongo: no documents in result" {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(primitive.NilObjectID, " = ", userReg.ID, primitive.NilObjectID == userReg.ID)
-		if userReg.ID != primitive.NilObjectID {
+
+		if recordUser.ID != primitive.NilObjectID {
 			http.Error(w, "Email already in use", http.StatusBadRequest)
 			return
 		}
@@ -69,19 +79,36 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		recordUser := data.User{
-			ID:           primitive.NewObjectID(),
-			Name:         name,
-			Surname:      surname,
-			Dob:          dob,
-			Email:        email,
-			PasswordHash: hashedPassword,
+		token, err := emailVerification.GenerateVerificationToken()
+		if err != nil {
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			return
+		}
+
+		recordUser = data.User{
+			ID: primitive.NewObjectID(),
+			UserInfo: data.UserInfo{
+				Name:         name,
+				Surname:      surname,
+				Dob:          dob,
+				Email:        email,
+				PasswordHash: hashedPassword,
+			},
+			VerificationToken: token,
+			Verified:          false,
 		}
 
 		err = data.CreateUser(recordUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+
+		err = emailVerification.SendVerificationEmail(email, token)
+		if err != nil {
+			http.Error(w, "Failed to send verification email", http.StatusInternalServerError)
+			return
+		}
+
 		logger.Infof("USER WAS CREATED: %s", recordUser)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -89,6 +116,45 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles("html/registrationForm.html"))
 	tmpl.Execute(w, nil)
+}
+
+func VerifyEmailHandler(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Invalid verification link", http.StatusBadRequest)
+		return
+	}
+
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.Connect(ctx)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	defer client.Disconnect(ctx)
+
+	usersCollection := client.Database("test").Collection("users")
+	filter := bson.M{"verification_token": token}
+	update := bson.M{"$set": bson.M{"verified": true, "verification_token": ""}}
+
+	result, err := usersCollection.UpdateOne(ctx, filter, update) //TODO make ModifyUser func instead
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	if result.MatchedCount == 0 {
+		http.Error(w, "Invalid verification token", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Fprintln(w, "Email verified successfully")
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +179,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword(result.PasswordHash, []byte(loginData.password))
+		err = bcrypt.CompareHashAndPassword(result.UserInfo.PasswordHash, []byte(loginData.password))
 		if err != nil {
 			http.Error(w, "Invalid password", http.StatusUnauthorized)
 			return
@@ -121,7 +187,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		http.SetCookie(w, &http.Cookie{
 			Name:    "session",
-			Value:   result.Email,
+			Value:   result.UserInfo.Email,
 			Expires: time.Now().Add(24 * time.Hour),
 		})
 
@@ -132,7 +198,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Empty user struct!", http.StatusNotFound)
 			return
 		}
-		logger.Infof("%s LOGGED IN", result.Email)
+		logger.Infof("%s LOGGED IN", result.UserInfo.Email)
 		return
 	}
 
@@ -208,7 +274,7 @@ func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 			logger.Infof("User with ID: %s was UPDATED!", ObjID)
 		}
 
-		changedUser, _ := data.GetUser(data.ShowUser().Email)
+		changedUser, _ := data.GetUser(data.ShowUser().UserInfo.Email)
 		_ = data.SetUser(changedUser)
 
 		http.Redirect(w, r, "/showUserProfile", http.StatusSeeOther)
@@ -226,7 +292,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if data.ShowUser().Email != cookie.Value {
+		if data.ShowUser().UserInfo.Email != cookie.Value {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			http.SetCookie(w, &http.Cookie{
 				Name:    "session",

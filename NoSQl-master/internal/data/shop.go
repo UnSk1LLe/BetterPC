@@ -211,3 +211,7 @@ type General struct {
 	Discount     int    `bson:"discount"`
 	Amount       int    `bson:"amount"`
 }
+
+func (g General) FinalPrice() int {
+	return g.Price - (g.Price * g.Discount / 100)
+}

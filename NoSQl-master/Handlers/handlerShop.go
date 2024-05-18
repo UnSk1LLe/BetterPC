@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -52,7 +53,7 @@ func ComparisonCpuMb(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().Name}
+		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -95,7 +96,7 @@ func ComparisonCpuRam(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().Name}
+		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -139,7 +140,7 @@ func ComparisonCpuCooling(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().Name}
+		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -1069,7 +1070,7 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 
 	logger.Infof("Found multiple items: %v", len(itemsStruct))
 
-	dataToSend := []interface{}{itemsStruct, data.ShowUser().Name}
+	dataToSend := []interface{}{itemsStruct, data.ShowUser().UserInfo.Name}
 
 	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
@@ -1077,75 +1078,9 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ListProductInfo(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
-	value := r.FormValue("showProduct")[0:3]
-	var tmplName string
-	dbName := "shop"
-	var collectionName string
-	var item interface{}
-
-	switch value {
-	case "cpu":
-		collectionName = "cpu"
-		tmplName = "fullListCpu.html"
-		item = data.Cpu{}
-	case "clg":
-		collectionName = "cooling"
-		tmplName = "fullListCooling.html"
-		item = data.Cooling{}
-	case "mbd":
-		collectionName = "motherboard"
-		tmplName = "fullListMotherboard.html"
-		item = data.Motherboard{}
-	case "hsg":
-		collectionName = "housing"
-		tmplName = "fullListHousing.html"
-		item = data.Housing{}
-	case "hdd":
-		collectionName = "hdd"
-		tmplName = "fullListHdd.html"
-		item = data.Hdd{}
-	case "ssd":
-		collectionName = "ssd"
-		tmplName = "fullListSsd.html"
-		item = data.Ssd{}
-	case "pwr":
-		collectionName = "powersupply"
-		tmplName = "fullListPowersupply.html"
-		item = data.PowerSupply{}
-	case "gpu":
-		collectionName = "gpu"
-		tmplName = "fullListGpu.html"
-		item = data.Gpu{}
-	case "ram":
-		collectionName = "ram"
-		tmplName = "fullListRam.html"
-		item = data.Ram{}
-	default:
-		logger.Infof("Error: failed to Show Product Info!")
-		return
-	}
-
-	err := data.Init(dbName, collectionName)
-	if err != nil {
-		return
-	}
-	defer data.CloseConnection()
-
-	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("showProduct")[13:37])
-	filter := bson.M{"_id": ObjID}
-
-	cur, err := data.Collection.Find(context.TODO(), filter)
-	if err != nil {
-		logger.Infof("error: %v", err)
-	}
-	defer cur.Close(context.TODO())
-
-	tmpl := template.Must(template.ParseFiles("html/" + tmplName))
-
+func decodeProduct(productType string, cur *mongo.Cursor, logger *logging.Logger, item interface{}) interface{} {
 	for cur.Next(context.TODO()) {
-		switch value {
+		switch productType {
 		case "cpu":
 			var itemCpu data.Cpu
 			err := cur.Decode(&itemCpu)
@@ -1220,6 +1155,77 @@ func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 			item = itemRam
 		}
 	}
+	return item
+}
+
+func ListProductInfo(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	value := r.FormValue("showProduct")[0:3]
+	var tmplName string
+	dbName := "shop"
+	var collectionName string
+	var item interface{}
+
+	switch value {
+	case "cpu":
+		collectionName = "cpu"
+		tmplName = "fullListCpu.html"
+		item = data.Cpu{}
+	case "clg":
+		collectionName = "cooling"
+		tmplName = "fullListCooling.html"
+		item = data.Cooling{}
+	case "mbd":
+		collectionName = "motherboard"
+		tmplName = "fullListMotherboard.html"
+		item = data.Motherboard{}
+	case "hsg":
+		collectionName = "housing"
+		tmplName = "fullListHousing.html"
+		item = data.Housing{}
+	case "hdd":
+		collectionName = "hdd"
+		tmplName = "fullListHdd.html"
+		item = data.Hdd{}
+	case "ssd":
+		collectionName = "ssd"
+		tmplName = "fullListSsd.html"
+		item = data.Ssd{}
+	case "pwr":
+		collectionName = "powersupply"
+		tmplName = "fullListPowersupply.html"
+		item = data.PowerSupply{}
+	case "gpu":
+		collectionName = "gpu"
+		tmplName = "fullListGpu.html"
+		item = data.Gpu{}
+	case "ram":
+		collectionName = "ram"
+		tmplName = "fullListRam.html"
+		item = data.Ram{}
+	default:
+		logger.Infof("Error: failed to Show Product Info!")
+		return
+	}
+
+	err := data.Init(dbName, collectionName)
+	if err != nil {
+		return
+	}
+	defer data.CloseConnection()
+
+	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("showProduct")[13:37])
+	filter := bson.M{"_id": ObjID}
+
+	cur, err := data.Collection.Find(context.TODO(), filter)
+	if err != nil {
+		logger.Infof("error: %v", err)
+	}
+	defer cur.Close(context.TODO())
+
+	tmpl := template.Must(template.ParseFiles("html/" + tmplName))
+
+	item = decodeProduct(value, cur, logger, item)
 
 	if err := cur.Err(); err != nil {
 		logger.Infof("error: %v", err)
@@ -1371,7 +1377,7 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
 	logger.Infof("Found multiple items: %v", len(cpuItems))
 
-	dataToSend := []interface{}{cpuItems, data.ShowUser().Name}
+	dataToSend := []interface{}{cpuItems, data.ShowUser().UserInfo.Name}
 
 	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
@@ -1381,6 +1387,18 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Infof("Error executing template: %v", err)
 		return
+	}
+}
+
+func OpenCart(w http.ResponseWriter, req *http.Request) {
+	logger := logging.GetLogger()
+
+	tmpl := template.Must(template.ParseFiles("html/cart.html"))
+	dataToSend := []interface{}{data.Cart, data.ShowUser().UserInfo.Name}
+
+	err := tmpl.Execute(w, dataToSend)
+	if err != nil {
+		logger.Infof("error: %v", err)
 	}
 }
 

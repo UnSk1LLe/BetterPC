@@ -36,7 +36,7 @@
         </div>
         <div id="add-panel">
             <div id="shopping-cart">
-                <a href="#"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
             </div>
             <div class="user-container">
                 <img src="./assets/icons/userdefault.png" alt="User Account">
@@ -168,19 +168,23 @@
                     </div>
                     <div class="cpu-actions">
                         <form method="post" action="/showProduct">
-                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{$item..ID}}">Full</button>
+                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{$item.ID}}">Full</button>
                         </form>
                         <form method="post" action="/modifyCpuForm">
-                            <button class="compare-button" name="modifyProduct" type="submit" value="cpu{{$item..ID}}">Modify</button>
+                            <button class="compare-button" name="modifyProduct" type="submit" value="cpu{{$item.ID}}">Modify</button>
                         </form>
-                        <button id="addToCartButton" name="addToCartButton" class="buy-button" type="button" value="cpu{{$item.ID}}">Add to cart</button>
-                        <div id="outOfStockMessage" style="display: none;">Out of stock</div>
+                        {{ if gt $item.General.Amount 0 }}
+                        <button id="addToCartButton{{$index}}" class="buy-button" type="button" onclick="addToCart('cpu{{$item.ID}}', {{$index}})">Add to cart</button>
+                        {{ else }}
+                        <div class="out-of-stock">Out of stock</div>
+                        {{ end }}
+                        <div id="addedText{{$index}}" style="display: none;">Added</div>
                     </div>
                     <p class="price">{{  $item.General.Price }} ₸</p>
                 </div>
             </div>
-            <script src="./assets/js/listProducts.js"></script>
             {{ end }}
+            <script src="./assets/js/listProducts.js"></script>
         </div>
         <form action="/addCpuForm" method="post">
             <button class="submit-button" name="cpuForm" type="submit">Add CPU</button>

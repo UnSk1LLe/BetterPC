@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Search</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?element=cpu">CPU</a>
+                        <a href="/listProducts?element=gpu">GPU</a>
+                        <a href="/listProducts?element=motherboard">Motherboards</a>
+                        <a href="/listProducts?element=ram">RAM</a>
+                        <a href="/listProducts?element=powersupply">Power supply</a>
+                        <a href="/listProducts?element=ssd">SSD</a>
+                        <a href="/listProducts?element=hdd">HDD</a>
+                        <a href="/listProducts?element=cooling"><!---Air--->Cooling</a>
+                        <!---<a href="/listProducts?element=watercooling">Water Cooling</a>--->
+                        <a href="/listProducts?element=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart">
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ index . 1 }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<main>
+        <h2>Cart Items</h2>
+        <div id="cpu-list">
+            {{ range $index, $item := index . 0 }}
+            <div class="cpu-card">
+                <div class="cpu-image">
+                    <img src="assets/icons/s1.jpg" alt="CPU Image">
+                </div>
+                <div class="cpu-details">
+                    <h3 class="product-name">{{  $item.Model  }}</h3>
+                    <div class="cpu-info">
+                        <p>{{  $item.Amount  }}</p>
+                    </div>
+                    <div class="cpu-actions">
+                        <form method="post" action="/showProduct">
+                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{$item.ID}}">Full</button>
+                        </form>
+                        <form method="post" action="/modifyCpuForm">
+                            <button class="compare-button" name="modifyProduct" type="submit" value="cpu{{$item.ID}}">Modify</button>
+                        </form>
+                        <div id="addedText{{$index}}" style="display: none;">Added</div>
+                    </div>
+                    <p class="price">{{  $item.Price }} ₸</p>
+                </div>
+            </div>
+            {{ end }}
+            <script src="./assets/js/listProducts.js"></script>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

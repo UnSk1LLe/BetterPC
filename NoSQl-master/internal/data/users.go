@@ -9,16 +9,21 @@ import (
 	"time"
 )
 
-var Gmail string
 var currentUser User
 
 type User struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Name         string             `bson:"name"`
-	Surname      string             `bson:"surname"`
-	Dob          time.Time          `bson:"dob"`
-	Email        string             `bson:"email"`
-	PasswordHash []byte             `bson:"password"`
+	ID                primitive.ObjectID `bson:"_id"`
+	UserInfo          UserInfo           `bson:"user_info"`
+	VerificationToken string             `bson:"verification_token"`
+	Verified          bool               `bson:"verified"`
+}
+
+type UserInfo struct {
+	Name         string    `bson:"name"`
+	Surname      string    `bson:"surname"`
+	Dob          time.Time `bson:"dob"`
+	Email        string    `bson:"email"`
+	PasswordHash []byte    `bson:"password"`
 }
 
 func CreateUser(user User) error {
@@ -44,7 +49,7 @@ func GetUser(email string) (User, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 
 	var user User
-	err = Collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	err = Collection.FindOne(ctx, bson.M{"user_info.email": email}).Decode(&user)
 	if err != nil {
 		return User{}, err
 	}
@@ -65,12 +70,16 @@ func SetUser(user User) error {
 func ClearUser() {
 	logger := logging.GetLogger()
 	currentUser = User{
-		ID:           primitive.NilObjectID,
-		Name:         "",
-		Surname:      "",
-		Dob:          time.Time{},
-		Email:        "",
-		PasswordHash: nil,
+		ID: primitive.NilObjectID,
+		UserInfo: UserInfo{
+			Name:         "",
+			Surname:      "",
+			Dob:          time.Time{},
+			Email:        "",
+			PasswordHash: nil,
+		},
+		VerificationToken: "",
+		Verified:          false,
 	}
 	logger.Infof("User data was cleared")
 }

@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var Cart []Item
+
 type Order struct {
 	ID     primitive.ObjectID `bson:"_id,omitempty"`
 	Items  []Item             `bson:"items"`
@@ -21,7 +23,7 @@ type Item struct {
 	ProductType string             `bson:"product_type"`
 	Model       string             `bson:"model,omitempty"`
 	Amount      int                `bson:"amount"`
-	Price       float64            `bson:"price,omitempty"`
+	Price       int                `bson:"price,omitempty"`
 }
 
 func CreateOrder(items []Item, userID primitive.ObjectID) error {
@@ -80,4 +82,21 @@ func GetOrders(userID primitive.ObjectID) ([]Order, error) {
 	}
 	logger.Infof("Found %d Orders", len(orders))
 	return orders, nil
+}
+
+func SetOrderStatus(orderID primitive.ObjectID, status string) error {
+	logger := logging.GetLogger()
+
+	err := Init("shop", "orders")
+	if err != nil {
+		return err
+	}
+	defer CloseConnection()
+
+	_, err = Collection.UpdateOne(context.TODO(), bson.M{"_id": orderID}, bson.M{"$set": bson.M{"status": status}})
+	if err != nil {
+		return err
+	}
+	logger.Infof("Set Order #%s STATUS: <%s>", orderID, status)
+	return nil
 }

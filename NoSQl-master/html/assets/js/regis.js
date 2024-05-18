@@ -99,7 +99,7 @@ document.addEventListener("input", function () {
     const confirmPassword = document.getElementById("confirm-password").value;
     const registerButton = document.getElementById("registerButton");
 
-    if (name && surname && email && dob && password && confirmPassword && password === confirmPassword) {
+    if (name && surname && isValidEmail(email) && dob && password && confirmPassword && password === confirmPassword) {
         registerButton.disabled = false;
     } else {
         registerButton.disabled = true;
@@ -114,5 +114,11 @@ var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
 var dd = String(today.getDate()).padStart(2, '0');
 var maxDate = yyyy + '-' + mm + '-' + dd;
 
-// Set the max attribute of the date input field to today's date
 document.getElementById("dob").max = maxDate;
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+    return emailRegex.test(email);
+}
