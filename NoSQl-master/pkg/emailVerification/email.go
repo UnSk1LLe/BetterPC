@@ -1,10 +1,10 @@
 package emailVerification
 
 import (
+	"MongoDb/pkg/logging"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net"
 	"net/smtp"
 	"regexp"
@@ -70,7 +70,7 @@ func IsVerifiedEmail(email string) (bool, error) {
 	return smtpCheck, nil
 }
 
-func GenerateVerificationToken() (string, error) {
+func GenerateToken() (string, error) {
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
@@ -78,15 +78,14 @@ func GenerateVerificationToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func SendVerificationEmail(email string, token string) error {
+func SendEmail(email string, subject string, body string) error {
+	logger := logging.GetLogger()
 	from := "betterpc@mail.ru"
 	password := "YkrvYMZ8KgEnqqtyUtGG"
 	smtpHost := "smtp.mail.ru"
 	smtpPort := "587"
 
 	to := []string{email}
-	subject := "Verify your email address" //change domain in body!! !! ! !! !
-	body := fmt.Sprintf("Please click the following link to verify your email address: http://localhost:8080/verify?token=%s", token)
 
 	message := []byte("Subject: " + subject + "\r\n" +
 		"\r\n" +
@@ -95,5 +94,9 @@ func SendVerificationEmail(email string, token string) error {
 	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
-	return err
+	if err != nil {
+		return err
+	}
+	logger.Infof("Message sent to %s", email)
+	return nil
 }

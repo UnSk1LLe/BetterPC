@@ -12,6 +12,7 @@ func main() {
 	logger.Info("Create route")
 	http.HandleFunc("/register", Handlers.Register)
 	http.HandleFunc("/verify", Handlers.VerifyEmailHandler)
+	http.HandleFunc("/recoverPassword", Handlers.RecoverPassword)
 	http.HandleFunc("/login", Handlers.Login)
 	http.HandleFunc("/logout", Handlers.Logout)
 	http.HandleFunc("/home", Handlers.AuthMiddleware(Handlers.Home))

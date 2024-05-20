@@ -55,7 +55,29 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 	return nil
 }
 
-func GetOrders(userID primitive.ObjectID) ([]Order, error) {
+func GetOrderByID(orderID primitive.ObjectID) (Order, error) {
+	logger := logging.GetLogger()
+	if orderID == primitive.NilObjectID {
+		return Order{}, errors.New("orderID cannot be nil")
+	}
+
+	err := Init("shop", "orders")
+	if err != nil {
+		return Order{}, err
+	}
+	defer CloseConnection()
+
+	var order Order
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	err = Collection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&order)
+	if err != nil {
+		return Order{}, err
+	}
+	logger.Infof("Found Order %v", order)
+	return order, nil
+}
+
+func GetOrdersByUserID(userID primitive.ObjectID) ([]Order, error) {
 	logger := logging.GetLogger()
 	if userID == primitive.NilObjectID {
 		return nil, errors.New("userID cannot be nil")

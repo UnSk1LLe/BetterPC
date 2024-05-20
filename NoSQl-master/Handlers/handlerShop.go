@@ -1285,6 +1285,12 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 		priceTo = 999999
 	}
 
+	if priceFrom > priceTo {
+		temp := priceFrom
+		priceFrom = priceTo
+		priceTo = temp
+	}
+
 	ramTypes = r.Form["ram-type"]
 	sockets = r.Form["socket"]
 	pcieValues := r.Form["pcie-version"]
@@ -1313,7 +1319,7 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(manufacturers) > 0 {
-		filter["manufacturer"] = bson.M{"$in": manufacturers}
+		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
 	}
 
 	if len(categories) > 0 {
@@ -1326,7 +1332,7 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if priceFrom != 0 || priceTo != 0 {
-		filter["price"] = bson.M{"$gte": priceFrom, "$lte": priceTo}
+		filter["general.price"] = bson.M{"$gte": priceFrom, "$lte": priceTo}
 	}
 
 	if len(ramTypes) > 0 {
@@ -1368,6 +1374,7 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		cpuItems = append(cpuItems, cpuItem)
+		logger.Info(cpuItem)
 	}
 	if err := cur.Err(); err != nil {
 		logger.Infof("Error iterating cursor: %v", err)
@@ -1390,7 +1397,7 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func OpenCart(w http.ResponseWriter, req *http.Request) {
+func OpenCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
 	tmpl := template.Must(template.ParseFiles("html/cart.html"))
@@ -1400,10 +1407,4 @@ func OpenCart(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.Infof("error: %v", err)
 	}
-}
-
-func ShowProfile(w http.ResponseWriter, r *http.Request) {
-	//logger := logging.GetLogger()
-	tmpl := template.Must(template.ParseFiles("html/userProfile.html"))
-	tmpl.Execute(w, data.ShowUser())
 }

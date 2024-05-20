@@ -6,6 +6,7 @@ import (
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -50,11 +51,24 @@ func GetUser(email string) (User, error) {
 
 	var user User
 	err = Collection.FindOne(ctx, bson.M{"user_info.email": email}).Decode(&user)
-	if err != nil {
+	if err != nil || user.ID == primitive.NilObjectID {
 		return User{}, err
 	}
-
 	return user, nil
+}
+
+func UpdateUser(filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
+	err := Init("test", "users")
+	if err != nil {
+		return nil, err
+	}
+	defer CloseConnection()
+
+	result, err := Collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func SetUser(user User) error {

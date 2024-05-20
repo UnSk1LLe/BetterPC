@@ -79,7 +79,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		token, err := emailVerification.GenerateVerificationToken()
+		token, err := emailVerification.GenerateToken()
 		if err != nil {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
@@ -103,7 +103,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		err = emailVerification.SendVerificationEmail(email, token)
+		subject := "Verify your email address" //change domain in body!! !! ! !! !
+		body := fmt.Sprintf("Please click the following link to verify your email address: http://localhost:8080/verify?token=%s", token)
+		err = emailVerification.SendEmail(email, subject, body)
 		if err != nil {
 			http.Error(w, "Failed to send verification email", http.StatusInternalServerError)
 			return
@@ -155,6 +157,114 @@ func VerifyEmailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "Email verified successfully")
+}
+
+func RecoverPassword(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	token := r.URL.Query().Get("token")
+	recovery := r.URL.Query().Get("recovery")
+	email := r.FormValue("email")
+
+	if token == "" && recovery == "" {
+		tmpl := template.Must(template.ParseFiles("html/passwordRecovery.html"))
+		err := tmpl.Execute(w, map[string]interface{}{
+			"Token": token,
+		})
+		if err != nil {
+			http.Error(w, "Response Writer Error!", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	if recovery == "linkSent" {
+		token, err := emailVerification.GenerateToken()
+		if err != nil {
+			http.Error(w, "Server error", http.StatusInternalServerError)
+			return
+		}
+
+		var user data.User
+		user, err = data.GetUser(email)
+		if user.ID == primitive.NilObjectID {
+			logger.Infof("No user with email: %v", email)
+			return
+		}
+
+		if user.Verified != true {
+			logger.Infof("Unverified user %s", email)
+			return
+		}
+
+		filter := bson.M{"_id": user.ID}
+		update := bson.M{"$set": bson.M{"verification_token": token}}
+
+		_, err = data.UpdateUser(filter, update)
+		if err != nil {
+			logger.Errorf("Error updating user: %v", err)
+		}
+
+		subject := "Password recovery"
+		body := fmt.Sprintf("Use the following link to create a new password for your account: http://localhost:8080/recoverPassword?recovery=newPassword&token=%s", token)
+		err = emailVerification.SendEmail(email, subject, body)
+		if err != nil {
+			http.Error(w, "Could not send an email. Try later.", http.StatusInternalServerError)
+			return
+		}
+		action := "/shop"
+		message := "If your email is correct, we will send a recovery link to it."
+		_ = showMessage(action, message, w)
+		return
+	} else if recovery == "newPassword" {
+		tmpl := template.Must(template.ParseFiles("html/passwordRecovery.html"))
+		err := tmpl.Execute(w, map[string]interface{}{
+			"Token": token,
+		})
+		if err != nil {
+			http.Error(w, "Response Writer Error!", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	newPassword := r.FormValue("password")
+	confirmPassword := r.FormValue("confirmPassword")
+
+	if newPassword != confirmPassword {
+		action := fmt.Sprintf("/recoverPassword?recovery=newPassword&token=%s", token)
+		message := "Password mismatch. Please try again."
+		err := showMessage(action, message, w)
+		if err != nil {
+			http.Error(w, message, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	filter := bson.M{"verification_token": token}
+	update := bson.M{"$set": bson.M{"user_info.password": hashedPassword, "verification_token": ""}}
+
+	result, err := data.UpdateUser(filter, update)
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
+	if result.MatchedCount == 0 {
+		action := "/shop"
+		message := "Your password recovery token is not valid anymore."
+		err = showMessage(action, message, w)
+		return
+	}
+
+	action := "/shop"
+	message := "Password recovery finished successfully!"
+	err = showMessage(action, message, w)
+	return
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -305,4 +415,23 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		next.ServeHTTP(w, r)
 	}
+}
+
+func showMessage(action string, message string, w http.ResponseWriter) error {
+	tmpl := template.Must(template.ParseFiles("html/message.html"))
+	err := tmpl.Execute(w, map[string]interface{}{
+		"Action":  action,
+		"Message": message,
+	})
+	if err != nil {
+		http.Error(w, "Response Writer Error!", http.StatusInternalServerError)
+		return err
+	}
+	return nil
+}
+
+func ShowProfile(w http.ResponseWriter, r *http.Request) {
+	//logger := logging.GetLogger()
+	tmpl := template.Must(template.ParseFiles("html/userProfile.html"))
+	tmpl.Execute(w, data.ShowUser())
 }
