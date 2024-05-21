@@ -59,52 +59,54 @@
     <div id="results">
         <h2>Cart Items</h2>
         <div id="cart-list">
-            {{ range $index, $item := index . 0 }}
-            <div class="cpu-card">
-                <div class="cpu-image">
-                    <img src="assets/icons/s1.jpg" alt="Product Image">
-                </div>
-                <div class="cpu-details">
-                    <h3 class="product-name">{{ $item.Model }}</h3>
-                    <div class="cpu-info">
-                        <p>Price: {{ $item.Price }} ₸</p>
-                        <div class="quantity">
-                            <button type="button" onclick="changeQuantity({{ $index }}, 'decrease')">&lt;</button>
-                            <span id="quantity{{ $index }}">{{ $item.Amount }}</span>
-                            <button type="button" onclick="changeQuantity({{ $index }}, 'increase')">&gt;</button>
+            <form method="post" action="/createNewOrder">
+                {{ range $index, $item := index . 0 }}
+                <div class="cpu-card">
+                    <div class="cpu-image">
+                        <img src="assets/icons/s1.jpg" alt="Product Image">
+                    </div>
+                    <div class="cpu-details">
+                        <h3 class="product-name">{{ $item.Model }}</h3>
+                        <div class="cpu-info">
+                            <p>Price: {{ $item.Price }} ₸</p>
+                            <div class="quantity">
+                                <button type="button" onclick="changeQuantity({{ $index }}, 'decrease')">&lt;</button>
+                                <span id="quantity{{ $index }}">{{ $item.Amount }}</span>
+                                <button type="button" onclick="changeQuantity({{ $index }}, 'increase')">&gt;</button>
+                            </div>
+                        </div>
+                        <div class="cpu-actions">
+                            <form method="post" action="/showProduct">
+                                <button class="buy-button" name="showProduct" type="submit" value="cpu{{ $item.ID }}">Full</button>
+                            </form>
+                            <form method="post" action="/deleteProduct">
+                                <button class="compare-button" name="deleteProduct" type="submit" value="cpu{{ $item.ID }}">Delete</button>
+                            </form>
                         </div>
                     </div>
-                    <div class="cpu-actions">
-                        <form method="post" action="/showProduct">
-                            <button class="buy-button" name="showProduct" type="submit" value="cpu{{ $item.ID }}">Full</button>
-                        </form>
-                        <form method="post" action="/deleteProduct">
-                            <button class="compare-button" name="deleteProduct" type="submit" value="cpu{{ $item.ID }}">Delete</button>
-                        </form>
-                    </div>
                 </div>
-            </div>
-            {{ end }}
-            <script src="./assets/js/listProducts.js"></script>
-            <script>
-                function changeQuantity(index, action) {
-                    var quantityElement = document.getElementById('quantity' + index);
-                    var currentQuantity = parseInt(quantityElement.textContent);
-                    if (action === 'increase') {
-                        currentQuantity++;
-                    } else if (action === 'decrease' && currentQuantity > 1) {
-                        currentQuantity--;
+                {{ end }}
+                <script src="./assets/js/listProducts.js"></script>
+                <script>
+                    function changeQuantity(index, action) {
+                        var quantityElement = document.getElementById('quantity' + index);
+                        var currentQuantity = parseInt(quantityElement.textContent);
+                        if (action === 'increase') {
+                            currentQuantity++;
+                        } else if (action === 'decrease' && currentQuantity > 1) {
+                            currentQuantity--;
+                        }
+
+                        quantityElement.textContent = currentQuantity;
+
+                        // Send an AJAX request to update the quantity in the backend
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/updateCart', true);
+                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                        xhr.send('productId=' + index + '&quantity=' + currentQuantity);
                     }
-
-                    quantityElement.textContent = currentQuantity;
-
-                    // Send an AJAX request to update the quantity in the backend
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/updateCart', true);
-                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                    xhr.send('productId=' + index + '&quantity=' + currentQuantity);
-                }
-            </script>
+                </script>
+            </form>
         </div>
     </div>
 </main>

@@ -3,6 +3,7 @@ package Handlers
 import (
 	"MongoDb/internal/data"
 	"MongoDb/pkg/logging"
+	"MongoDb/pkg/session"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +20,7 @@ import (
 
 func Shop(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/shop.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 }
 
 func ComparisonCpuMb(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +54,7 @@ func ComparisonCpuMb(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
+		dataToSend := []interface{}{items, data.ShowUser(r).UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -96,7 +97,7 @@ func ComparisonCpuRam(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
+		dataToSend := []interface{}{items, data.ShowUser(r).UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -140,7 +141,7 @@ func ComparisonCpuCooling(w http.ResponseWriter, r *http.Request) {
 		}
 		logger.Infof("Found multiple items: %v", len(items))
 
-		dataToSend := []interface{}{items, data.ShowUser().UserInfo.Name}
+		dataToSend := []interface{}{items, data.ShowUser(r).UserInfo.Name}
 
 		err = tmpl.Execute(w, dataToSend)
 		if err != nil {
@@ -156,7 +157,7 @@ func ComparisonMbCpu(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "cpu")
 	var items []data.Cpu
@@ -196,7 +197,7 @@ func ComparisonMbRam(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listRam.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "ram")
 	var items []data.Ram
@@ -236,7 +237,7 @@ func ComparisonMbHousing(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listHousing.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "housing")
 	var items []data.Housing
@@ -276,7 +277,7 @@ func ComparisonMbHdd(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listHdd.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "hdd")
 	var items []data.Hdd
@@ -316,7 +317,7 @@ func ComparisonMbSsd(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listSsd.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "ssd")
 	var items []data.Ssd
@@ -363,7 +364,7 @@ func ComparisonRamCpu(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "cpu")
 	var items []data.Cpu
@@ -403,7 +404,7 @@ func ComparisonRamMb(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listMotherboard.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "motherboard")
 	var items []data.Motherboard
@@ -443,7 +444,7 @@ func ComparisonSsdMb(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listMotherboard.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "motherboard")
 	var items []data.Motherboard
@@ -492,7 +493,7 @@ func ComparisonSsdHousing(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listHousing.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "housing")
 	var items []data.Housing
@@ -542,7 +543,7 @@ func ComparisonHddMb(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listMotherboard.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "motherboard")
 	var items []data.Motherboard
@@ -581,7 +582,7 @@ func ComparisonHddHousing(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listHousing.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "housing")
 	var items []data.Housing
@@ -631,7 +632,7 @@ func ComparisonCoolingCpu(w http.ResponseWriter, r *http.Request) {
 
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 
 	data.Init("shop", "cpu")
 	var items []data.Cpu
@@ -670,7 +671,7 @@ func ComparisonCoolingCpu(w http.ResponseWriter, r *http.Request) {
 
 func AddCpuForm(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/addCpu.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 }
 
 func AddCpu(w http.ResponseWriter, r *http.Request) {
@@ -1070,7 +1071,8 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 
 	logger.Infof("Found multiple items: %v", len(itemsStruct))
 
-	dataToSend := []interface{}{itemsStruct, data.ShowUser().UserInfo.Name}
+	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+	dataToSend := []interface{}{itemsStruct, user.UserInfo.Name}
 
 	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
@@ -1384,7 +1386,8 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
 	logger.Infof("Found multiple items: %v", len(cpuItems))
 
-	dataToSend := []interface{}{cpuItems, data.ShowUser().UserInfo.Name}
+	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+	dataToSend := []interface{}{cpuItems, user.UserInfo.Name}
 
 	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
@@ -1401,7 +1404,7 @@ func OpenCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
 	tmpl := template.Must(template.ParseFiles("html/cart.html"))
-	dataToSend := []interface{}{data.Cart, data.ShowUser().UserInfo.Name}
+	dataToSend := []interface{}{data.Cart, data.ShowUser(r).UserInfo.Name}
 
 	err := tmpl.Execute(w, dataToSend)
 	if err != nil {

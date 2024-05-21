@@ -4,6 +4,7 @@ import (
 	"MongoDb/internal/data"
 	"MongoDb/pkg/emailVerification"
 	"MongoDb/pkg/logging"
+	"MongoDb/pkg/session"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -94,6 +95,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 				Email:        email,
 				PasswordHash: hashedPassword,
 			},
+			SessionToken:      "",
 			VerificationToken: token,
 			Verified:          false,
 		}
@@ -281,34 +283,48 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var result data.User
+		var user data.User
 
-		result, err := data.GetUser(loginData.email)
+		user, err := data.GetUser(loginData.email)
 		if err != nil {
 			http.Error(w, "Invalid email", http.StatusUnauthorized)
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword(result.UserInfo.PasswordHash, []byte(loginData.password))
+		err = bcrypt.CompareHashAndPassword(user.UserInfo.PasswordHash, []byte(loginData.password))
 		if err != nil {
 			http.Error(w, "Invalid password", http.StatusUnauthorized)
 			return
 		}
 
+		sessionToken, err := session.GenerateSessionToken()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		filter := bson.M{"_id": user.ID}
+		update := bson.M{"$set": bson.M{"session_token": sessionToken}}
+		_, err = data.UpdateUser(filter, update)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
 		http.SetCookie(w, &http.Cookie{
 			Name:    "session",
-			Value:   result.UserInfo.Email,
+			Value:   sessionToken,
 			Expires: time.Now().Add(24 * time.Hour),
 		})
 
 		http.Redirect(w, r, "/shop", http.StatusSeeOther)
 
-		err = data.SetUser(result)
+		/*err = data.SetUser(result)
 		if err != nil {
 			http.Error(w, "Empty user struct!", http.StatusNotFound)
 			return
-		}
-		logger.Infof("%s LOGGED IN", result.UserInfo.Email)
+		}*/
+		logger.Infof("%s LOGGED IN", user.UserInfo.Email)
 		return
 	}
 
@@ -322,25 +338,35 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
+	logger.Infof("%v LOGGED OUT", data.ShowUser(r).UserInfo.Email)
+
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session",
 		Value:   "",
 		Expires: time.Unix(0, 0),
 	})
 
+	filter := bson.M{"session_token": session.GetSessionTokenFromCookie(r)}
+	update := bson.M{"$set": bson.M{"session_token": ""}}
+	_, err := data.UpdateUser(filter, update)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
-	logger.Infof("%s LOGGED OUT", data.ShowUser())
-	data.ClearUser()
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/home.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 }
 
 func EditUserInfoForm(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/editUserInfo.html"))
-	tmpl.Execute(w, data.ShowUser())
+
+	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+
+	tmpl.Execute(w, user)
 }
 
 func EditUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -384,9 +410,6 @@ func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 			logger.Infof("User with ID: %s was UPDATED!", ObjID)
 		}
 
-		changedUser, _ := data.GetUser(data.ShowUser().UserInfo.Email)
-		_ = data.SetUser(changedUser)
-
 		http.Redirect(w, r, "/showUserProfile", http.StatusSeeOther)
 	}
 
@@ -402,18 +425,23 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if data.ShowUser().UserInfo.Email != cookie.Value {
+		sessionToken := cookie.Value
+
+		var user data.User
+		user, err = data.GetUserBySessionToken(sessionToken)
+		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			http.SetCookie(w, &http.Cookie{
 				Name:    "session",
 				Value:   "",
 				Expires: time.Unix(0, 0),
 			})
-			logger.Infof("Cookie expired or not got another value.")
-			return
+			logger.Info("Invalid session token.")
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "user", user)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
@@ -433,5 +461,5 @@ func showMessage(action string, message string, w http.ResponseWriter) error {
 func ShowProfile(w http.ResponseWriter, r *http.Request) {
 	//logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/userProfile.html"))
-	tmpl.Execute(w, data.ShowUser())
+	tmpl.Execute(w, data.ShowUser(r))
 }

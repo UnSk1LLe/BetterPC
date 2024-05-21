@@ -112,3 +112,7 @@ func extractItemFromProduct(product interface{}) (data.Item, error) {
 		Amount: 1,
 	}, nil
 }
+
+func CreateNewOrder(w http.ResponseWriter, r *http.Request) {
+	
+}
