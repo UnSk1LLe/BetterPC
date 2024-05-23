@@ -45,5 +45,5 @@ function addToCart(productId, index) {
             }
         }
     };
-    xhr.send('addToCart=' + productId);
+    xhr.send('addToCart=' + encodeURIComponent(productId));
 }

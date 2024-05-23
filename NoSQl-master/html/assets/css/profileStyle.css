@@ -59,11 +59,18 @@
 
 .profile-details button {
     padding: 10px 20px;
-    background-color: #1a237e;
+    width: 100px;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+.profile-details .edit-button {
+    background-color: #1a237e;
+}
+
+.profile-details .cancel-button {
+    background-color: #971c1c; /* Red color for the cancel button */
 }
 
 .orders-list {

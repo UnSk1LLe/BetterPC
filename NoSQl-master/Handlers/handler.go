@@ -459,7 +459,23 @@ func showMessage(action string, message string, w http.ResponseWriter) error {
 }
 
 func ShowProfile(w http.ResponseWriter, r *http.Request) {
-	//logger := logging.GetLogger()
+	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/userProfile.html"))
-	tmpl.Execute(w, data.ShowUser(r))
+	user := data.ShowUser(r)
+	ordersList, err := data.GetOrdersByUserID(user.ID)
+	if err != nil {
+		logger.Errorf("Could not Get Orders By User ID: %v", err)
+	}
+	dataToSend := struct {
+		User       data.User
+		OrdersList []data.Order
+	}{
+		User:       user,
+		OrdersList: ordersList,
+	}
+	err = tmpl.Execute(w, dataToSend)
+	if err != nil {
+		http.Error(w, "Response Writer Error!", http.StatusInternalServerError)
+		logger.Errorf("Could not execute template: %v", err)
+	}
 }

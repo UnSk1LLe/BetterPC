@@ -13,15 +13,15 @@
     <form action="/editUserInfo" method="post" class="registration-form">
         <div class="form-group">
             <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{{.Name}}"required>
+            <input type="text" id="name" name="name" value="{{.UserInfo.Name}}"required>
         </div>
         <div class="form-group">
             <label for="surname">Surname:</label>
-            <input type="text" id="surname" name="surname" value="{{.Surname}}" required>
+            <input type="text" id="surname" name="surname" value="{{.UserInfo.Surname}}" required>
         </div>
         <div class="form-group">
             <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" min="1900-01-01" max="2024-12-31" value="{{.Dob}}" required>
+            <input type="date" id="dob" name="dob" min="1900-01-01" max="2024-12-31" required>
         </div>
         <button type="submit" id="editUserInfoButton" name="editUserInfoButton" class="submit-button" value="{{.ID}}">Save</button>
     </form>
@@ -30,14 +30,12 @@
     </form>
 </div>
 <script>
-    // Assuming your date string is stored in a variable named dateString
-    var dateString = "{{.Dob}}";
+    var dateString = '{{.UserInfo.Dob}}' ;
+    console.log(dateString)
 
-    // Extract the date part (YYYY-MM-DD) from the datetime string
     var datePart = dateString.split(' ')[0];
-
-    // Set the value of the input element to the extracted date part
-    document.getElementById('dob').value = datePart;
+    console.log(datePart)
+    document.getElementById('dob').value = datePart
 </script>
 <script>
 

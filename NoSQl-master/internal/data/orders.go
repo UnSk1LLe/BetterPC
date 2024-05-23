@@ -4,26 +4,46 @@ import (
 	"MongoDb/pkg/logging"
 	"context"
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
-var Cart []Item
-
 type Order struct {
 	ID     primitive.ObjectID `bson:"_id,omitempty"`
 	Items  []Item             `bson:"items"`
 	UserID primitive.ObjectID `bson:"user_id"`
+	Date   time.Time          `bson:"date"`
+	Price  int                `bson:"price"`
 	Status string             `bson:"status"`
 }
 
 type Item struct {
+	ItemHeader   ItemHeader `bson:"item_header"`
+	Manufacturer string     `bson:"manufacturer"`
+	Model        string     `bson:"model,omitempty"`
+	Price        int        `bson:"price,omitempty"`
+	MaxAmount    int        `bson:"max_amount,omitempty"`
+}
+
+type ItemHeader struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	ProductType string             `bson:"product_type"`
-	Model       string             `bson:"model,omitempty"`
 	Amount      int                `bson:"amount"`
-	Price       int                `bson:"price,omitempty"`
+}
+
+func (i Item) ItemFinalPrice() int {
+	finalPrice := i.ItemHeader.Amount * i.Price
+	return finalPrice
+}
+
+func (o *Order) CalculateOrderPrice() {
+	totalPrice := 0
+	for _, item := range o.Items {
+		totalPrice += item.ItemFinalPrice()
+	}
+	o.Price = totalPrice
 }
 
 func CreateOrder(items []Item, userID primitive.ObjectID) error {
@@ -38,8 +58,11 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 		ID:     primitive.NewObjectID(),
 		Items:  items,
 		UserID: userID,
+		Date:   time.Now(),
 		Status: "Created",
 	}
+	newOrder.CalculateOrderPrice()
+
 	err := Init("shop", "orders")
 	if err != nil {
 		return err
@@ -52,6 +75,7 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 		return err
 	}
 	logger.Infof("New Order CREATED: %s", newOrder.ID)
+	fmt.Println(newOrder)
 	return nil
 }
 
@@ -101,6 +125,7 @@ func GetOrdersByUserID(userID primitive.ObjectID) ([]Order, error) {
 		if err != nil {
 			return nil, err
 		}
+		orders = append(orders, order)
 	}
 	logger.Infof("Found %d Orders", len(orders))
 	return orders, nil

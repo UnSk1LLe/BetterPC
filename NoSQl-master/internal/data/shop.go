@@ -1,9 +1,24 @@
 package data
 
 import (
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
+
+type CompatibilityMode struct {
+	CPU         Cpu
+	Motherboard Motherboard
+	RAM         Ram
+	GPU         Gpu
+	SSD         Ssd
+	HDD         Hdd
+	Cooling     Cooling
+	PowerSupply PowerSupply
+	Housing     Housing
+}
 
 type Cpu struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty"`
@@ -212,6 +227,30 @@ type General struct {
 	Amount       int    `bson:"amount"`
 }
 
-func (g General) FinalPrice() int {
+func (g General) ProductFinalPrice() int {
 	return g.Price - (g.Price * g.Discount / 100)
+}
+
+func GetProductById(dbName string, collectionName string, ID primitive.ObjectID) (*mongo.SingleResult, error) {
+	err := Init(dbName, collectionName)
+	if err != nil {
+		return nil, err
+	}
+	defer CloseConnection()
+
+	result := Collection.FindOne(context.TODO(), bson.M{"_id": ID})
+	return result, nil
+}
+
+func GetProducts(dbName string, collectionName string, filter bson.M) (*mongo.Cursor, error) {
+	err := Init(dbName, collectionName)
+	if err != nil {
+		return nil, err
+	}
+	defer CloseConnection()
+	cur, err := Collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil, err
+	}
+	return cur, nil
 }

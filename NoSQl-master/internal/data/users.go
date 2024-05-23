@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -109,5 +110,25 @@ func UpdateUser(filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
 
 func ShowUser(r *http.Request) User {
 	user, _ := GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+	user.UserInfo.Email = hideEmail(user.UserInfo.Email)
 	return user
+}
+
+func hideEmail(email string) string {
+	atIndex := strings.Index(email, "@")
+	if atIndex == -1 {
+		return email
+	}
+
+	localPart := email[:atIndex]
+	domainPart := email[atIndex:]
+
+	if len(localPart) <= 2 {
+
+		return localPart + domainPart
+	}
+
+	hiddenEmail := localPart[:2] + "***" + domainPart
+
+	return hiddenEmail
 }

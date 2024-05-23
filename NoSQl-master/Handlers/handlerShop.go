@@ -972,21 +972,22 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := data.Init(dbName, collectionName)
-	if err != nil {
-		return
-	}
-	defer data.CloseConnection()
-
 	tmpl := template.Must(template.ParseFiles("html/" + tmplName))
 
 	filter := bson.M{}
 
-	cur, err := data.Collection.Find(context.TODO(), filter)
+	cur, err := data.GetProducts(dbName, collectionName, filter)
 	if err != nil {
-		logger.Infof("error: %v", err)
+		logger.Infof("Error when trying to get products: %v", err)
+		return
 	}
-	defer cur.Close(context.TODO())
+	defer func(cur *mongo.Cursor, ctx context.Context) {
+		err := cur.Close(ctx)
+		if err != nil {
+			logger.Infof("Error when trying to close cursor: %v", err)
+			return
+		}
+	}(cur, context.TODO())
 
 	for cur.Next(context.TODO()) {
 		switch value {
@@ -1397,17 +1398,5 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Infof("Error executing template: %v", err)
 		return
-	}
-}
-
-func OpenCart(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
-
-	tmpl := template.Must(template.ParseFiles("html/cart.html"))
-	dataToSend := []interface{}{data.Cart, data.ShowUser(r).UserInfo.Name}
-
-	err := tmpl.Execute(w, dataToSend)
-	if err != nil {
-		logger.Infof("error: %v", err)
 	}
 }
