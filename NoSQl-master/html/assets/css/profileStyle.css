@@ -61,6 +61,7 @@
     padding: 10px 20px;
     width: 100px;
     color: #fff;
+    background-color: #636363;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -75,4 +76,21 @@
 
 .orders-list {
     /* Style for the orders list */
+}
+
+.order-details {
+    display: none;
+}
+
+.order-details.expanded {
+    display: block;
+}
+
+.toggle-details {
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: blue;
+    padding: 0;
+    margin-left: 10px;
 }

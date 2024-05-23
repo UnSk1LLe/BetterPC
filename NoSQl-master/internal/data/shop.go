@@ -8,6 +8,16 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
 
+var CpuCollection *mongo.Collection
+var MotherboardCollection *mongo.Collection
+var RamCollection *mongo.Collection
+var GpuCollection *mongo.Collection
+var CoolingCollection *mongo.Collection
+var SsdCollection *mongo.Collection
+var HddCollection *mongo.Collection
+var HousingCollection *mongo.Collection
+var PowerSupplyCollection *mongo.Collection
+
 type CompatibilityMode struct {
 	CPU         Cpu
 	Motherboard Motherboard

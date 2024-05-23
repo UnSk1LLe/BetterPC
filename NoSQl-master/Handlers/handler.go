@@ -462,7 +462,7 @@ func ShowProfile(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	tmpl := template.Must(template.ParseFiles("html/userProfile.html"))
 	user := data.ShowUser(r)
-	ordersList, err := data.GetOrdersByUserID(user.ID)
+	ordersList, err := data.GetOrdersByUserID(user.ID, true)
 	if err != nil {
 		logger.Errorf("Could not Get Orders By User ID: %v", err)
 	}

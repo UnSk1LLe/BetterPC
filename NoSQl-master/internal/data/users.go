@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var UsersCollection *mongo.Collection
+
 type User struct {
 	ID                primitive.ObjectID `bson:"_id"`
 	UserInfo          UserInfo           `bson:"user_info"`

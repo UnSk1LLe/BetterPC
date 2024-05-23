@@ -2,6 +2,7 @@ package main
 
 import (
 	"MongoDb/Handlers"
+	"MongoDb/internal/data"
 	"MongoDb/pkg/logging"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 func main() {
 	logger := logging.GetLogger()
 	logger.Info("Create route")
+	data.InitAll()
 	http.HandleFunc("/register", Handlers.Register)
 	http.HandleFunc("/verify", Handlers.VerifyEmailHandler)
 	http.HandleFunc("/recoverPassword", Handlers.RecoverPassword)
@@ -29,6 +31,7 @@ func main() {
 	http.HandleFunc("/updateCart", Handlers.AuthMiddleware(Handlers.UpdateCart))
 	http.HandleFunc("/deleteProductFromCart", Handlers.AuthMiddleware(Handlers.DeleteFromCart))
 	http.HandleFunc("/createOrderFromCart", Handlers.AuthMiddleware(Handlers.CreateOrderFromCart))
+	http.HandleFunc("/cancelOrder", Handlers.AuthMiddleware(Handlers.CancelOrder))
 	http.HandleFunc("/comparisonCpuMb", Handlers.AuthMiddleware(Handlers.ComparisonCpuMb))
 	http.HandleFunc("/comparisonCpuRam", Handlers.AuthMiddleware(Handlers.ComparisonCpuRam))
 	http.HandleFunc("/comparisonCpuCooling", Handlers.AuthMiddleware(Handlers.ComparisonCpuCooling))

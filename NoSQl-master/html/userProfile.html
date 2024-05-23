@@ -32,13 +32,39 @@
         <div id="orders" class="tabcontent">
             <h2>Active Orders</h2>
             <div class="orders-list">
+                {{ if .OrdersList }}
                 {{ range .OrdersList }}
                 <div class="profile-details">
-                    <p>№ <span id="order-number">{{.ID}}</span></p>
-                    <p>Date: <span id="order-date">{{.Date}}</span></p>
-                    <p>Contents: <span id="order-contents">{{.Items}}</span></p>
-                    <p>Status <span id="order-status">{{.Status}}</span></p>
-                    <button class="cancel-button" onclick="window.location.href = '/cancelOrder?orderID={{.ID}}'">Edit</button>
+                    <p>Order ID: <span class="order-number">{{.ID}}</span></p>
+                    <p>Date: <span class="order-date">{{.Date}}</span></p>
+                    <p>Contents:
+                        <span class="order-summary">
+                    {{range .Items}}{{.Manufacturer}} {{.Model}}, {{end}}
+                </span>
+                        <button class="toggle-details" onclick="toggleDetails(this)">Show Details</button>
+                    </p>
+                    <div class="order-details" style="display: none;">
+                        {{ range .Items }}
+                        <div class="item-details" data-price="{{ .Price }}" data-amount="{{ .ItemHeader.Amount }}">
+                            <div class="cpu-image">
+                                <img src="assets/icons/s1.jpg" alt="Product Image">
+                            </div>
+                            <div class="cpu-details">
+                                <h3 class="product-name">{{ .Manufacturer }} {{ .Model }}</h3>
+                                <p>Amount: <span class="amount">{{ .ItemHeader.Amount }}</span></p>
+                                <p>Price: <span class="total-price"></span> ₸</p>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                    <p>Order Price: <span class="order-status">{{.Price}} ₸</span></p>
+                    <p>Status: <span class="order-status">{{.Status}}</span></p>
+                    <button class="cancel-button" onclick="confirmCancel('{{.ID}}')">Cancel</button>
+                </div>
+                {{ end }}
+                {{ else }}
+                <div class="profile-details">
+                    <p>There are no active orders.</p>
                 </div>
                 {{ end }}
             </div>

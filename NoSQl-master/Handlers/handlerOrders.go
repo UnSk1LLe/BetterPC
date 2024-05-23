@@ -418,3 +418,20 @@ func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
 	_ = showMessage("/shop", "Order has been created successfully! You can check it in your profile.", w)
 	return
 }
+
+func CancelOrder(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	itemID, err := primitive.ObjectIDFromHex(r.FormValue("orderID")[10:34])
+	if err != nil {
+		http.Error(w, "Invalid item ID", http.StatusBadRequest)
+		return
+	}
+	err = data.CancelOrder(itemID)
+	if err != nil {
+		logger.Errorf("Error canceling order: %v", err)
+		http.Error(w, "Error canceling order", http.StatusInternalServerError)
+		return
+	}
+	logger.Infof("Order cancelled: %v", itemID)
+	_ = showMessage("/showUserProfile", "Order has been cancelled successfully!", w)
+}
