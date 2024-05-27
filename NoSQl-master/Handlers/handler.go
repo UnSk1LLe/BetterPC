@@ -354,9 +354,9 @@ func EditUserInfoForm(w http.ResponseWriter, r *http.Request) {
 
 func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	err := data.Init("test", "users")
-	if err != nil {
-		http.Redirect(w, r, "/shop", http.StatusSeeOther)
+
+	if data.UsersCollection == nil {
+		HandleError(errors.New("empty collection"), logger, w)
 		return
 	}
 
@@ -380,12 +380,12 @@ func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 		filter := bson.M{"_id": ObjID}
 
 		update := bson.M{"$set": bson.M{
-			"name":    name,
-			"surname": surname,
-			"dob":     dob,
+			"user_info.name":    name,
+			"user_info.surname": surname,
+			"user_info.dob":     dob,
 		}}
 
-		_, err = data.Collection.UpdateOne(context.TODO(), filter, update)
+		_, err = data.UpdateUser(filter, update)
 		if err != nil {
 			logger.Errorf("A bulk write error occurred: %v", err)
 			if err != nil {

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add new product</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
+</head>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=gpu">GPU</a>
+                        <a href="/listProducts?productType=motherboard">Motherboards</a>
+                        <a href="/listProducts?productType=ram">RAM</a>
+                        <a href="/listProducts?productType=powersupply">Power supply</a>
+                        <a href="/listProducts?productType=ssd">SSD</a>
+                        <a href="/listProducts?productType=hdd">HDD</a>
+                        <a href="/listProducts?productType=cooling">Cooling</a>
+                        <a href="/listProducts?productType=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart">
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ .User.UserInfo.Name }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<body>
+<main>
+    <button class="back-button" onclick="window.history.back()">&#60; Back</button>
+    <div class="add-buttons-container">
+        <div class="add-card">
+            <h1>Choose product type</h1>
+            <form method="post" action="/addNewProductForm?productType=cpu">
+                <button class="add-btn submit-button" id="addCpu" type="submit">CPU</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=motherboard">
+                <button class="submit-button" id="addMotherboard" type="submit" disabled>Motherboard</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=ram">
+                <button class="submit-button" id="addRam" type="submit" disabled>RAM</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=gpu">
+                <button class="submit-button" id="addGpu" type="submit" disabled>GPU</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=ssd">
+                <button class="submit-button" id="addSsd" type="submit" disabled>SSD</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=hdd">
+                <button class="submit-button" id="addHdd" type="submit" disabled>HDD</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=powersupply">
+                <button class="submit-button" id="addPowersupply" type="submit" disabled>Power Supply</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=cooling">
+                <button class="submit-button" id="addCooling" type="submit" disabled>Cooling</button>
+            </form>
+            <form method="post" action="/addNewProductForm?productType=housing">
+                <button class="submit-button" id="addHousing" type="submit" disabled>Housing</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

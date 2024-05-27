@@ -36,8 +36,8 @@ function filterProducts(productType) {
     form.submit();
 }
 
-function modifyProduct(productType, productID) {
-    window.location.href = `/modifyProduct?productType=${encodeURIComponent(productType)}&productID=${encodeURIComponent(productID)}`
+function modifyProductForm(productType, productID) {
+    window.location.href = `/modifyProductForm?productType=${encodeURIComponent(productType)}&productID=${encodeURIComponent(productID)}`
 }
 
 function addProduct() {
@@ -115,7 +115,7 @@ function expandComponent(componentType, componentContainer) {
 }
 
 function replaceComponent(productType) {
-    window.location.href = `/listProduct?productType=${encodeURIComponent(productType)}&listCompatibleOnly=${true}`
+    window.location.href = `/listProducts?productType=${encodeURIComponent(productType)}&listCompatibleOnly=${true}`
 }
 
 function deleteComponent(productType) {
@@ -125,7 +125,7 @@ function deleteComponent(productType) {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200) {
-                alert('Product deleted from build');
+                location.reload();
             } else {
                 alert('Error deleting product from build');
             }
@@ -161,7 +161,7 @@ function addToBuild(productType, productID) {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200) {
-                alert('Product added to build');
+                location.reload();
             } else {
                 alert('Error adding product to build');
             }

@@ -1,11 +1,13 @@
 package data
 
 import (
+	"MongoDb/pkg/logging"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
+	"reflect"
 	"strconv"
 )
 
@@ -277,6 +279,22 @@ func GetProductById(dbName string, collectionName string, ID primitive.ObjectID)
 	return result, nil
 }
 
+func DeleteProductById(productType string, ID primitive.ObjectID) (*mongo.DeleteResult, error) {
+	logger := logging.GetLogger()
+	collection, err := defineCollection(productType)
+	if err != nil {
+		logger.Errorf("Error deleting product of type(%s): %v", productType, err)
+		return nil, err
+	}
+	result, err := collection.DeleteOne(context.TODO(), bson.M{"_id": ID})
+	if err != nil {
+		logger.Errorf("Could not delete product of type(%s): %v", productType, err)
+		return nil, err
+	}
+	logger.Infof("Product <%s> with ID: %v was DELETED!", productType, ID)
+	return result, err
+}
+
 func (cpu Cpu) Standardize() Product {
 	var product Product
 	product.ProductHeader.ID = cpu.ID
@@ -373,6 +391,10 @@ func (housing Housing) Standardize() Product {
 	product.General = housing.General
 	product.Description = "Housing Description"
 	return product
+}
+
+func IsZero(v interface{}) bool {
+	return reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface())
 }
 
 func GetProducts(dbName string, collectionName string, filter bson.M) (*mongo.Cursor, error) {

@@ -85,7 +85,8 @@ main {
 }
 
 #filters {
-    width: 700px;
+    min-width: 240px;
+    max-width: 240px;
     background-color: #fff;
     padding: 20px;
     border-radius: 5px;
@@ -376,6 +377,15 @@ input:checked + .slider:before {
     border: none;
     font-size: 16px;
     cursor: pointer;
+}
+
+.buy-button:disabled {
+    background-color: #ccc;
+    cursor: default;
+}
+
+.buy-button:disabled:hover {
+    background-color: #ccc;
 }
 
 .compare-button {
@@ -680,5 +690,57 @@ h2 {
     margin-bottom: 20px;
 }
 
+.add-buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 4% 15%;
+    gap: 20px;
+}
 
+.add-card {
+    width: 650px;
+    min-height: 200px; /* Increased height */
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    position: relative;
+}
+
+.add-buttons-container form {
+    width: 100%;
+}
+
+.submit-button:disabled {
+    background-color: rgba(77, 81, 119, 0.56); /* Change to desired disabled color */
+    cursor: not-allowed;
+}
+
+.back-button {
+    position: absolute;
+    width: 120px;
+    height: 50px;
+    top: 100px;
+    left: 50px;
+    padding: 10px 20px;
+    background-color: #1a237e;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+.back-button:hover {
+    background-color: #303f9f;
+}
+
+.back-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
 

@@ -61,5 +61,173 @@
     "Form-factor": ["ATX", "FlexATX", "SFX", "TFX"],
     "GPU power": ["16 pin (12VHPWR)", "6+2 pin", "6+2 pin x2", "6+2 pin x3", "6+2 pin x4"],
     "CPU power": ["4+4 pin", "4+4 pin x2", "8 pin"]
+  },
+  "ramFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Corsair", "G.Skill", "Kingston", "Crucial", "Team Group", "ADATA", "Patriot", "HyperX", "Samsung"],
+    "Capacity": [2, 4, 8, 16, 32, 64, 128],
+    "Form-factor": ["DIMM", "SO-DIMM"],
+    "Type": ["DDR3", "DDR4", "DDR5"],
+    "Frequency": {
+      "min": 0,
+      "max": 6000
+    },
+    "CAS Latency": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+    "Voltage": {
+      "min": 1.2,
+      "max": 1.5
+    }
+  },
+  "gpuFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["NVIDIA", "AMD"],
+    "Architecture": ["NVIDIA Ampere", "NVIDIA Turing", "NVIDIA Pascal", "AMD RDNA 2", "AMD RDNA", "AMD GCN"],
+    "Memory Capacity": [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64],
+    "Memory Type": ["GDDR6X", "GDDR6", "GDDR5X", "GDDR5", "HBM2", "HBM"],
+    "GPU Frequency": {
+      "min": 0,
+      "max": 3000
+    },
+    "Process Size": [7, 8, 12, 14, 16, 22],
+    "TDP": {
+      "min": 0,
+      "max": 500
+    },
+    "Max Resolution": ["7680x4320", "5120x2880", "4096x2160", "3840x2160", "2560x1600", "2560x1440", "1920x1200", "1920x1080"],
+    "Max Monitors": [1, 2, 3, 4, 6, 8, 10]
+  },
+  "ssdFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Samsung", "Crucial", "Western Digital", "Seagate", "ADATA", "Kingston", "Corsair", "SK hynix", "Intel", "Toshiba"],
+    "Capacity": [120, 240, 256, 480, 500, 512, 960, 1000, 1024, 2000, 2048, 4000, 4096, 8000, 8192],
+    "Interface": ["SATA", "SATA III", "NVMe", "PCIe", "PCIe 3.0", "PCIe 4.0"],
+    "Memory Type": ["TLC", "MLC", "QLC", "3D NAND", "2D NAND"],
+    "Read Speed": {
+      "min": 0,
+      "max": 7000
+    },
+    "Write Speed": {
+      "min": 0,
+      "max": 7000
+    },
+    "Form Factor": ["2.5 inch", "M.2", "mSATA", "U.2"],
+    "Weight": {
+      "min": 0,
+      "max": 1000
+    }
+  },
+  "hddFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": [
+      "Seagate",
+      "Western Digital",
+      "Toshiba",
+      "HGST",
+      "Samsung"
+    ],
+    "Capacity": [
+      250,
+      320,
+      500,
+      640,
+      750,
+      1000,
+      2000,
+      3000,
+      4000,
+      5000,
+      6000,
+      8000,
+      10000,
+      12000,
+      16000
+    ],
+    "Interface": [
+      "SATA",
+      "SATA III"
+    ],
+    "Type": [
+      "HDD",
+      "SSHD"
+    ],
+    "Write Method": [
+      "CMR",
+      "SMR"
+    ],
+    "Transfer Rate": {
+      "min": 0,
+      "max": 300
+    },
+    "Spindle Speed": [
+      5400,
+      5900,
+      7200
+    ]
+  },
+  "coolingFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Corsair", "NZXT", "Cooler Master", "Noctua", "Arctic", "Deepcool", "be quiet!", "Thermaltake", "Scythe", "Antec"],
+    "Type": ["Air Cooler", "Liquid Cooler"],
+    "Sockets": ["AM5", "AM4", "LGA 1700", "LGA 1200", "LGA 1151-v2", "LGA 1151"],
+    "Fans": [1, 2, 3, 4, 5, 6, 7, 8],
+    "RPM": {
+      "min": 0,
+      "max": 3000
+    },
+    "TDP": {
+      "min": 0,
+      "max": 300
+    },
+    "Noise Level": {
+      "min": 0,
+      "max": 50
+    },
+    "Mount Type": ["Top", "Front", "Rear", "Side"]
+  },
+  "housingFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Corsair", "NZXT", "Cooler Master", "Fractal Design", "Phanteks", "Lian Li", "Thermaltake", "be quiet!", "SilverStone", "Deepcool"],
+    "Form Factor": ["E-ATX", "ATX", "Micro-ATX", "Mini-ITX"],
+    "Drive Bays": {
+      "3.5 inch": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      "2.5 inch": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    },
+    "MB Form Factor": ["E-ATX", "ATX", "Micro-ATX", "Mini-ITX"],
+    "PS Form Factor": ["ATX", "SFX", "SFX-L"],
+    "Expansion Slots": [1, 2, 3, 4, 5, 6, 7],
+    "Graphic Card Size": {
+      "min": 0,
+      "max": 500
+    },
+    "Cooler Height": {
+      "min": 0,
+      "max": 300
+    },
+    "Size": {
+      "min": 0,
+      "max": 1000
+    },
+    "Weight": {
+      "min": 0,
+      "max": 20000
+    }
   }
 }

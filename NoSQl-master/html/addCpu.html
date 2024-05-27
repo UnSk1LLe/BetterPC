@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Add CPU</title>
-    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+    <link rel="stylesheet" href="./assets/css/mainStyle.css">
 </head>
 <body>
 <main>
-    <div class="add-cpu-card">
+    <button class="back-button" onclick="window.history.back()">&#60; Back</button>
+    <div class="add-product-card">
         <h1>Add CPU</h1>
-        <form action="/addCpuDo" method="post" class="cpu-form">
+        <form action="/addNewProduct?productType=cpu" method="post" class="cpu-form">
             <div class="form-group">
                 <label for="manufacturer">Manufacturer:</label>
                 <select id="manufacturer" name="man" required>

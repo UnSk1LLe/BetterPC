@@ -65,12 +65,12 @@
     <div id="results">
         <div class="switch-container">
             <label class="switch">
-                <input type="checkbox" id="toggleDisplay">
+                <input type="checkbox" id="toggleDisplay" {{ if .PcBuilder }}checked{{ end }}>
                 <span class="slider"></span>
             </label>
             <span class="onofftext">PC Builder</span>
         </div>
-        <div class="components-container" id="build">
+        <div class="components-container" id="build" {{ if .PcBuilder }} style="display: flex" {{ end }}>
             <div class="component" data-component="cpu" onclick="handleClick('cpu')">
                 {{ if .Build.CPU.Name }}
                 <img src="./assets/images/cpu.jpg" alt="CPU">
@@ -230,9 +230,11 @@
                         <button class="compare-button" name="modifyProduct" type="button" onclick="modifyProduct('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}')">Modify</button>
                         {{ if gt $item.General.Amount 0 }}
                         <button id="addToCartButton{{$index}}" class="buy-button" type="button" onclick="addToCart('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}', {{$index}})">Add to cart</button>
+                        {{ if $.PcBuilder }}
                         <button id="addToBuildButton{{$index}}" class="compare-button" type="button" onclick="addToBuild('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}')">Add to Build</button>
+                        {{ end }}
                         {{ else }}
-                        <div class="out-of-stock">Out of stock</div>
+                        <button name="outOfStock" class="buy-button" type="button" disabled>Out of stock</button>
                         {{ end }}
                         <div id="addedText{{$index}}" style="display: none;">Added</div>
                     </div>
@@ -243,7 +245,7 @@
             {{ end }}
             <script src="./assets/js/listProducts.js"></script>
         </div>
-        <form action="/addProductForm" method="post">
+        <form action="/addNewProductChoice" method="post">
             <button class="submit-button" name="cpuForm" type="submit">Add Product</button>
         </form>
     </div>
