@@ -24,7 +24,9 @@ func main() {
 	http.HandleFunc("/editUserInfo", Handlers.AuthMiddleware(Handlers.EditUserInfo))
 	http.HandleFunc("/showProduct", Handlers.AuthMiddleware(Handlers.ListProductInfo))
 	http.HandleFunc("/listProducts", Handlers.AuthMiddleware(Handlers.ListProducts))
-	http.HandleFunc("/cpuFilters", Handlers.AuthMiddleware(Handlers.FilterCpu))
+	http.HandleFunc("/addProductToBuild", Handlers.AuthMiddleware(Handlers.AddToBuild))
+	http.HandleFunc("/deleteProductFromBuild", Handlers.AuthMiddleware(Handlers.DeleteFromBuild))
+
 	http.HandleFunc("/getCart", Handlers.AuthMiddleware(Handlers.GetCart))
 	http.HandleFunc("/addProductToCart", Handlers.AuthMiddleware(Handlers.AddToCart))
 	http.HandleFunc("/openCart", Handlers.AuthMiddleware(Handlers.OpenCart))
@@ -32,7 +34,7 @@ func main() {
 	http.HandleFunc("/deleteProductFromCart", Handlers.AuthMiddleware(Handlers.DeleteFromCart))
 	http.HandleFunc("/createOrderFromCart", Handlers.AuthMiddleware(Handlers.CreateOrderFromCart))
 	http.HandleFunc("/cancelOrder", Handlers.AuthMiddleware(Handlers.CancelOrder))
-	http.HandleFunc("/comparisonCpuMb", Handlers.AuthMiddleware(Handlers.ComparisonCpuMb))
+	http.HandleFunc("/comparisonCpuMb", Handlers.AuthMiddleware(Handlers.ComparisonCpuMb)) //TODO remove redundant
 	http.HandleFunc("/comparisonCpuRam", Handlers.AuthMiddleware(Handlers.ComparisonCpuRam))
 	http.HandleFunc("/comparisonCpuCooling", Handlers.AuthMiddleware(Handlers.ComparisonCpuCooling))
 	http.HandleFunc("/comparisonMbCpu", Handlers.AuthMiddleware(Handlers.ComparisonMbCpu))
@@ -52,6 +54,12 @@ func main() {
 	http.HandleFunc("/modifyCpuForm", Handlers.AuthMiddleware(Handlers.ModifyCpuForm))
 	http.HandleFunc("/modifyCpu", Handlers.AuthMiddleware(Handlers.ModifyCpu))
 	http.HandleFunc("/deleteCpu", Handlers.AuthMiddleware(Handlers.DeleteCpu))
+
+	/*http.HandleFunc("/addProductForm", Handlers.AuthMiddleware(Handlers.AddProductForm)) //new functions
+	http.HandleFunc("/addProduct", Handlers.AuthMiddleware(Handlers.AddProduct))
+	http.HandleFunc("/modifyProductForm", Handlers.AuthMiddleware(Handlers.ModifyProductForm))
+	http.HandleFunc("/modifyProduct", Handlers.AuthMiddleware(Handlers.ModifyProduct))
+	http.HandleFunc("/deleteProduct", Handlers.AuthMiddleware(Handlers.DeleteProduct))*/
 
 	handler := http.StripPrefix("/assets/", http.FileServer(http.Dir("html/assets")))
 	http.Handle("/assets/", handler)

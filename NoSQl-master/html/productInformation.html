@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Processor</title>
+    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+</head>
+<body>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=gpu">GPU</a>
+                        <a href="/listProducts?productType=motherboard">Motherboards</a>
+                        <a href="/listProducts?productType=ram">RAM</a>
+                        <a href="/listProducts?productType=powersupply">Power supply</a>
+                        <a href="/listProducts?productType=ssd">SSD</a>
+                        <a href="/listProducts?productType=hdd">HDD</a>
+                        <a href="/listProducts?productType=cooling">Cooling</a>
+                        <a href="/listProducts?productType=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart">
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ .User.UserInfo.Name }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<main>
+    <div class="product-table">
+        {{ if eq .ProductType "cpu" }}
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Category:</td>
+                        <td>{{ .Product.Main.Category }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Generation:</td>
+                        <td>{{ .Product.Main.Generation }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Socket:</td>
+                        <td>{{ .Product.Main.Socket }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Cores:</td>
+                        <td>{{ .Product.Cores.Pcores }}P/{{ .Product.Cores.Ecores }}E/{{ .Product.Cores.Threads }}T</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Technical Process:</td>
+                        <td>{{ .Product.Cores.TechnicalProcess }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">RAM:</td>
+                        <td>{{ .Product.Ram.Type }} {{ .Product.Ram.MaxFrequency }}MHz ({{ .Product.Ram.MaxCapacity }})</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">TDP:</td>
+                        <td>{{ .Product.Tdp }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Max Temperature:</td>
+                        <td>{{ .Product.MaxTemperature }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Graphics:</td>
+                        <td>{{ .Product.Graphics }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">PCI-E:</td>
+                        <td>{{ .Product.PciE }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {{ else if eq .ProductType "motherboard" }}
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Socket:</td>
+                        <td>{{ .Product.Socket }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Chipset:</td>
+                        <td>{{ .Product.Chipset }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Interfaces:</td>
+                        <td>{{ .Product.Interfaces.Sata3 }} SATA3, {{ .Product.Interfaces.M2 }} M2</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">RAM:</td>
+                        <td>{{ .Product.Ram.Slots }} slots, {{ .Product.Ram.Type }} {{ .Product.Ram.MaxFrequency }}MHz ({{ .Product.Ram.MaxCapacity }})</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">PCI-E Standard:</td>
+                        <td>{{ .Product.PciStandard }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Motherboard power connector:</td>
+                        <td>{{ .Product.MbPower }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">CPU power connector:</td>
+                        <td>{{ .Product.CpuPower }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {{ else if eq .ProductType "cooling" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "ram" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "ssd" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "hdd" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "gpu" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "powersupply" }}
+        <p>{{.ProductType}}</p>
+        {{ else if eq .ProductType "housing" }}
+        <p>{{.ProductType}}</p>
+        {{ end }}
+
+        <div class="product-actions">
+            <h1>Compatibility mode here</h1>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterPC Shop</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=gpu">GPU</a>
+                        <a href="/listProducts?productType=motherboard">Motherboards</a>
+                        <a href="/listProducts?productType=ram">RAM</a>
+                        <a href="/listProducts?productType=powersupply">Power supply</a>
+                        <a href="/listProducts?productType=ssd">SSD</a>
+                        <a href="/listProducts?productType=hdd">HDD</a>
+                        <a href="/listProducts?productType=cooling">Cooling</a>
+                        <a href="/listProducts?productType=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart">
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ .User.UserInfo.Name }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<main>
+    <div id="filters">
+        <h2>Filters</h2>
+        <form id="filters-form" method="post" action="">
+            <div id="filter-container"></div>
+            <button class="submit-button" type="submit" onclick="filterProducts('{{.ProductType}}')">Apply</button>
+        </form>
+    </div>
+    <div id="results">
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="toggleDisplay">
+                <span class="slider"></span>
+            </label>
+            <span class="onofftext">PC Builder</span>
+        </div>
+        <div class="components-container" id="build">
+            <div class="component" data-component="cpu" onclick="handleClick('cpu')">
+                {{ if .Build.CPU.Name }}
+                <img src="./assets/images/cpu.jpg" alt="CPU">
+                <div class="component-details">
+                    <h3>{{.Build.CPU.Name}}</h3>
+                    <p>{{.Build.CPU.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/cpu.png" alt="CPU Icon">
+                    <p>CPU</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="motherboard" onclick="handleClick('motherboard')">
+                {{ if .Build.Motherboard.Name }}
+                <img src="./assets/images/motherboard.jpg" alt="Motherboard">
+                <div class="component-details">
+                    <h3>{{.Build.Motherboard.Name}}</h3>
+                    <p>{{.Build.Motherboard.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/motherboard.png" alt="Motherboard Icon">
+                    <p>Motherboard</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="ram" onclick="handleClick('ram')">
+                {{ if .Build.RAM.Name }}
+                <img src="./assets/images/ram.jpg" alt="RAM">
+                <div class="component-details">
+                    <h3>{{.Build.RAM.Name}}</h3>
+                    <p>{{.Build.RAM.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/ram.png" alt="RAM Icon">
+                    <p>RAM</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="gpu" onclick="handleClick('gpu')">
+                {{ if .Build.GPU.Name }}
+                <img src="./assets/images/gpu.jpg" alt="GPU">
+                <div class="component-details">
+                    <h3>{{.Build.GPU.Name}}</h3>
+                    <p>{{.Build.GPU.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/gpu.png" alt="GPU Icon">
+                    <p>GPU</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="ssd" onclick="handleClick('ssd')">
+                {{ if .Build.SSD.Name }}
+                <img src="./assets/images/ssd.jpg" alt="SSD">
+                <div class="component-details">
+                    <h3>{{.Build.SSD.Name}}</h3>
+                    <p>{{.Build.SSD.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/ssd.png" alt="SSD Icon">
+                    <p>SSD</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="hdd" onclick="handleClick('hdd')">
+                {{ if .Build.HDD.Name }}
+                <img src="./assets/images/hdd.jpg" alt="HDD">
+                <div class="component-details">
+                    <h3>{{.Build.HDD.Name}}</h3>
+                    <p>{{.Build.HDD.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/hdd.png" alt="HDD Icon">
+                    <p>HDD</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="cooling" onclick="handleClick('cooling')">
+                {{ if .Build.Cooling.Name }}
+                <img src="./assets/images/cooling.jpg" alt="Cooling">
+                <div class="component-details">
+                    <h3>{{.Build.Cooling.Name}}</h3>
+                    <p>{{.Build.Cooling.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/cooling.png" alt="Cooling Icon">
+                    <p>Cooling</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="powersupply" onclick="handleClick('powersupply')">
+                {{ if .Build.PowerSupply.Name }}
+                <img src="./assets/images/powersupply.jpg" alt="Power Supply">
+                <div class="component-details">
+                    <h3>{{.Build.PowerSupply.Name}}</h3>
+                    <p>{{.Build.PowerSupply.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/powersupply.png" alt="Power Supply Icon">
+                    <p>Power Supply</p>
+                </div>
+                {{ end }}
+            </div>
+
+            <div class="component" data-component="housing" onclick="handleClick('housing')">
+                {{ if .Build.Housing.Name }}
+                <img src="./assets/images/housing.jpg" alt="Housing">
+                <div class="component-details">
+                    <h3>{{.Build.Housing.Name}}</h3>
+                    <p>{{.Build.Housing.General.Price}} ₸</p>
+                </div>
+                {{ else }}
+                <div class="empty-component">
+                    <img src="./assets/icons/housing.png" alt="Housing Icon">
+                    <p>Housing</p>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        <div id="sort">
+            <label for="sort-price">Sort by Price:</label>
+            <select id="sort-price">
+                <option value="asc">Low to High</option>
+                <option value="desc">High to Low</option>
+            </select>
+        </div>
+        <h2>Results</h2>
+        <div id="product-list">
+            {{ range $index, $item := .ProductsList }}
+            <div class="product-card">
+                <div class="product-image">
+                    <img src="./assets/images/{{$item.ProductHeader.ProductType}}.jpg" alt="product Image">
+                </div>
+                <div class="product-details">
+                    <h3 class="product-name">{{$item.Name}}</h3>
+                    <div class="product-info">
+                        <p>{{$item.Description}}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="buy-button" name="showProduct" type="button" onclick="showProduct('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}')">Show</button>
+                        <button class="compare-button" name="modifyProduct" type="button" onclick="modifyProduct('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}')">Modify</button>
+                        {{ if gt $item.General.Amount 0 }}
+                        <button id="addToCartButton{{$index}}" class="buy-button" type="button" onclick="addToCart('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}', {{$index}})">Add to cart</button>
+                        <button id="addToBuildButton{{$index}}" class="compare-button" type="button" onclick="addToBuild('{{$item.ProductHeader.ProductType}}', '{{$item.ProductHeader.ID}}')">Add to Build</button>
+                        {{ else }}
+                        <div class="out-of-stock">Out of stock</div>
+                        {{ end }}
+                        <div id="addedText{{$index}}" style="display: none;">Added</div>
+                    </div>
+
+                    <p class="price">{{ $item.General.Price }} ₸</p>
+                </div>
+            </div>
+            {{ end }}
+            <script src="./assets/js/listProducts.js"></script>
+        </div>
+        <form action="/addProductForm" method="post">
+            <button class="submit-button" name="cpuForm" type="submit">Add Product</button>
+        </form>
+    </div>
+    <div class="component-detail-form" id="cpu-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/cpu.jpg" alt="CPU image" class="detail-image">
+            <h4>{{.Build.CPU.Name}}</h4>
+            <p>{{.Build.CPU.Description}}</p>
+            <p>{{.Build.CPU.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('cpu')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('cpu')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="motherboard-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/motherboard.jpg" alt="Motherboard image" class="detail-image">
+            <h4>{{.Build.Motherboard.Name}}</h4>
+            <p>{{.Build.Motherboard.Description}}</p>
+            <p>{{.Build.Motherboard.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('motherboard')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('motherboard')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="ram-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/ram.jpg" alt="RAM image" class="detail-image">
+            <h4>{{.Build.RAM.Name}}</h4>
+            <p>{{.Build.RAM.Description}}</p>
+            <p>{{.Build.RAM.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('ram')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('ram')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="gpu-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/gpu.jpg" alt="GPU image" class="detail-image">
+            <h4>{{.Build.GPU.Name}}</h4>
+            <p>{{.Build.GPU.Description}}</p>
+            <p>{{.Build.GPU.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('gpu')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('gpu')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="ssd-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/ssd.jpg" alt="SSD image" class="detail-image">
+            <h4>{{.Build.SSD.Name}}</h4>
+            <p>{{.Build.SSD.Description}}</p>
+            <p>{{.Build.SSD.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('ssd')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('ssd')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="hdd-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/hdd.jpg" alt="HDD image" class="detail-image">
+            <h4>{{.Build.HDD.Name}}</h4>
+            <p>{{.Build.HDD.Description}}</p>
+            <p>{{.Build.HDD.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('hdd')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('hdd')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="cooling-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/cooling.jpg" alt="Cooling image" class="detail-image">
+            <h4>{{.Build.Cooling.Name}}</h4>
+            <p>{{.Build.Cooling.Description}}</p>
+            <p>{{.Build.Cooling.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('cooling')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('cooling')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="powersupply-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/powersupply.jpg" alt="Power Supply image" class="detail-image">
+            <h4>{{.Build.PowerSupply.Name}}</h4>
+            <p>{{.Build.PowerSupply.Description}}</p>
+            <p>{{.Build.PowerSupply.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('powersupply')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('powersupply')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-detail-form" id="housing-detail-form">
+        <div class="detail-info">
+            <img src="./assets/images/housing.jpg" alt="Housing image" class="detail-image">
+            <h4>{{.Build.Housing.Name}}</h4>
+            <p>{{.Build.Housing.Description}}</p>
+            <p>{{.Build.Housing.General.Price}} ₸</p>
+            <div class="detail-actions">
+                <button class="replace-btn" onclick="replaceComponent('housing')">Replace</button>
+                <button class="delete-btn" onclick="deleteComponent('housing')">Delete</button>
+            </div>
+        </div>
+    </div>
+
+</main>
+<script src="./assets/js/listProducts.js"></script>
+</body>
+</html>

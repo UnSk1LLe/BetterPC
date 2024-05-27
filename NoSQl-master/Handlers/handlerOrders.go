@@ -18,37 +18,39 @@ import (
 func AddToCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	dbName := "shop"
-	productType := r.FormValue("addToCart")[0:3]
+	productType := r.FormValue("productType")
 
-	collectionName, product := defineStruct(productType)
-	if collectionName == "" {
-		http.Error(w, "Invalid product type", http.StatusBadRequest)
+	collectionName, product, err := defineStruct(productType)
+	if err != nil {
+		HandleError(err, logger, w)
 		return
 	}
 
-	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("addToCart")[13:37])
+	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
 	if err != nil {
-		http.Error(w, "Invalid ObjectID", http.StatusBadRequest)
+		logger.Errorf("Invalid productID: %s", r.FormValue("productID"))
+		HandleError(err, logger, w)
 		return
 	}
 
 	result, err := data.GetProductById(dbName, collectionName, ObjID)
 	if err != nil {
-		logger.Infof("Error getting product: %v", err)
-		http.Error(w, "Product not found", http.StatusNotFound)
+		logger.Errorf("Error getting product: %s", r.FormValue("productID"))
+		HandleError(err, logger, w)
 		return
 	}
+
 	err = result.Decode(product)
 	if err != nil {
-		logger.Infof("Error decoding product: %v", err)
-		http.Error(w, "Product not found", http.StatusNotFound)
+		logger.Errorf("Error decoding product: %v", product)
+		HandleError(err, logger, w)
 		return
 	}
 
 	item, err := extractItemHeaderFromProduct(productType, product)
 	if err != nil {
-		logger.Infof("Error extracting item from product: %v", err)
-		http.Error(w, "Error extracting product details", http.StatusInternalServerError)
+		logger.Errorf("Error extracting item from product: %v", err)
+		HandleError(err, logger, w)
 		return
 	}
 
@@ -56,7 +58,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	userCart, err = getCartFromCookie(r)
 	if err != nil {
 		logger.Infof("Error getting cart: %v", err)
-		http.Error(w, "Error getting cart", http.StatusInternalServerError)
+		HandleError(err, logger, w)
 		return
 	}
 
@@ -125,8 +127,9 @@ func extractItemFromProduct(itemHeader data.ItemHeader, product interface{}) (da
 }
 
 func getCartFromCookie(r *http.Request) ([]data.ItemHeader, error) {
+	logger := logging.GetLogger()
 	userID := data.ShowUser(r).ID.Hex()
-	cartCookie, err := r.Cookie(userID)
+	cartCookie, err := r.Cookie("cart" + userID)
 
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
@@ -135,21 +138,19 @@ func getCartFromCookie(r *http.Request) ([]data.ItemHeader, error) {
 		return nil, err
 	}
 
-	// URL-decode the cookie value
+	//URL-decode the cookie value
 	decodedValue, err := url.QueryUnescape(cartCookie.Value)
 	if err != nil {
 		return nil, err
 	}
 
-	// Debugging output
 	fmt.Println("Decoded Cart Cookie Value:", decodedValue)
 
 	var cart []data.ItemHeader
 	err = json.Unmarshal([]byte(decodedValue), &cart)
 	if err != nil {
-		// Additional debugging output
-		fmt.Println("Error unmarshalling cart cookie:", err)
-		fmt.Println("Cart Cookie Value (Raw):", decodedValue)
+		logger.Errorf("Error unmarshalling cart cookie: %v", err)
+		logger.Errorf("Cart Cookie Value (Raw): %v", decodedValue)
 
 		// If the cookie is not a valid JSON, reset it
 		return []data.ItemHeader{}, nil
@@ -167,11 +168,11 @@ func saveCartToCookie(w http.ResponseWriter, r *http.Request, cart []data.ItemHe
 
 	userID := data.ShowUser(r).ID.Hex()
 
-	// URL-encode the JSON string
+	//URL-encode the JSON string
 	encodedValue := url.QueryEscape(string(cartJSON))
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    userID,
+		Name:    "cart" + userID,
 		Value:   encodedValue,
 		Expires: time.Now().Add(24 * time.Hour),
 		Path:    "/", // Accessible everywhere
@@ -182,15 +183,16 @@ func saveCartToCookie(w http.ResponseWriter, r *http.Request, cart []data.ItemHe
 }
 
 func GetCart(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
 	userCart, err := getCartFromCookie(r)
 	if err != nil {
-		http.Error(w, "Error getting cart", http.StatusInternalServerError)
+		HandleError(errors.New("error getting cart"), logger, w)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(userCart); err != nil {
-		http.Error(w, "Error encoding cart data", http.StatusInternalServerError)
+	if err = json.NewEncoder(w).Encode(userCart); err != nil {
+		HandleError(errors.New("error encoding cart data"), logger, w)
 		return
 	}
 }
@@ -198,11 +200,10 @@ func GetCart(w http.ResponseWriter, r *http.Request) {
 func OpenCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
-	// Retrieve cart headers from cookie
 	userCartHeaders, err := getCartFromCookie(r)
 	if err != nil {
-		logger.Infof("Error getting cart headers: %v", err)
-		http.Error(w, "Error getting cart", http.StatusInternalServerError)
+		logger.Errorf("Error getting cart headers: %v", err)
+		HandleError(err, logger, w)
 		return
 	}
 
@@ -210,19 +211,23 @@ func OpenCart(w http.ResponseWriter, r *http.Request) {
 	userCart, err := getItemsFromItemHeaders(userCartHeaders, dbName, w)
 	if err != nil {
 		logger.Errorf("Error getting cart data: %v", err)
-		http.Error(w, "Error getting cart", http.StatusInternalServerError)
 	}
 
-	dataToSend := []interface{}{userCart, data.ShowUser(r).UserInfo.Name}
+	dataToSend := struct {
+		UserCart []data.Item
+		User     data.User
+	}{
+		UserCart: userCart,
+		User:     data.ShowUser(r),
+	}
 
 	logger.Infof("Data to send to template: %v", dataToSend)
 
-	// Parse and execute the template
 	tmpl := template.Must(template.ParseFiles("html/cart.html"))
 	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
-		logger.Infof("Template execution error: %v", err)
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		logger.Errorf("Template execution error: %v", err)
+		HandleError(err, logger, w)
 	}
 }
 
@@ -230,15 +235,14 @@ func getItemsFromItemHeaders(userCartHeaders []data.ItemHeader, dbName string, w
 	logger := logging.GetLogger()
 	var userCart []data.Item
 
-	// Fetch full product details for each ItemHeader
+	//Fetch full product details for each ItemHeader
 	for _, header := range userCartHeaders {
-		collectionName, product := defineStruct(header.ProductType)
-		if collectionName == "" {
-			http.Error(w, "Invalid product type", http.StatusBadRequest)
-			continue
+		collectionName, product, err := defineStruct(header.ProductType)
+		if err != nil {
+			HandleError(err, logger, w)
 		}
 
-		// Fetch product details from the database
+		//Fetch product details from the database
 		result, err := data.GetProductById(dbName, collectionName, header.ID)
 		if err != nil {
 			logger.Errorf("Error fetching product details: %v", err)
@@ -258,25 +262,26 @@ func getItemsFromItemHeaders(userCartHeaders []data.ItemHeader, dbName string, w
 	return userCart, nil
 }
 
-func defineStruct(productType string) (string, interface{}) {
+func defineStruct(productType string) (string, interface{}, error) {
 	logger := logging.GetLogger()
 	var collectionName string
+	var err error
 	var product interface{}
 
 	switch productType {
 	case "cpu":
 		collectionName = "cpu"
 		product = &data.Cpu{}
-	case "mbd":
+	case "motherboard":
 		collectionName = "motherboard"
 		product = &data.Motherboard{}
 	case "gpu":
 		collectionName = "gpu"
 		product = &data.Gpu{}
-	case "clg":
+	case "cooling":
 		collectionName = "cooling"
 		product = &data.Cooling{}
-	case "hsg":
+	case "housing":
 		collectionName = "housing"
 		product = &data.Housing{}
 	case "hdd":
@@ -288,14 +293,15 @@ func defineStruct(productType string) (string, interface{}) {
 	case "ram":
 		collectionName = "ram"
 		product = &data.Ram{}
-	case "pwr":
-		collectionName = "power_supply"
+	case "powersupply":
+		collectionName = "powersupply"
 		product = &data.PowerSupply{}
 	default:
-		logger.Infof("Error: wrong product type!")
-		return "", nil
+		logger.Errorf("Error: wrong product type <%s>!", productType)
+		err = errors.New("wrong product type: " + productType)
+		return "", nil, err
 	}
-	return collectionName, product
+	return collectionName, product, nil
 }
 
 func UpdateCart(w http.ResponseWriter, r *http.Request) {
@@ -377,7 +383,7 @@ func DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 func ClearUserCart(w http.ResponseWriter, r *http.Request) {
 	userID := data.ShowUser(r).ID.Hex()
 
-	cartCookie, err := r.Cookie(userID)
+	cartCookie, err := r.Cookie("cart" + userID)
 	if err != nil {
 		return
 	}
@@ -396,21 +402,21 @@ func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
 	itemHeaders, err := getCartFromCookie(r)
 	if err != nil {
 		logger.Errorf("Error getting cart from cookie: %v", err)
-		http.Error(w, "Error getting cart from cookie", http.StatusInternalServerError)
+		HandleError(errors.New("error getting cart from cookie"), logger, w)
 		return
 	}
 
 	userCart, err := getItemsFromItemHeaders(itemHeaders, "shop", w)
 	if err != nil {
 		logger.Errorf("Error getting items from itemHeaders: %v", err)
-		http.Error(w, "Error getting items from itemHeaders", http.StatusInternalServerError)
+		HandleError(errors.New("error getting items from itemHeaders"), logger, w)
 		return
 	}
 
 	err = data.CreateOrder(userCart, data.ShowUser(r).ID)
 	if err != nil {
 		logger.Errorf("Error creating order from cart: %v", err)
-		http.Error(w, "Error creating order from cart", http.StatusInternalServerError)
+		HandleError(errors.New("error creating order from cart"), logger, w)
 		return
 	}
 

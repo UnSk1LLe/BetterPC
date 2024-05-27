@@ -5,13 +5,18 @@ import (
 	"MongoDb/pkg/logging"
 	"MongoDb/pkg/session"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"html/template"
 	"net/http"
+	"net/url"
+	"reflect"
 	"strconv"
+	"time"
 )
 
 //TODO 1 closing connections (1/2 DONE)
@@ -20,7 +25,16 @@ import (
 
 func Shop(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/shop.html"))
-	tmpl.Execute(w, data.ShowUser(r))
+	dataToSend := struct {
+		User data.User
+	}{
+		User: data.ShowUser(r),
+	}
+	err := tmpl.Execute(w, dataToSend)
+	if err != nil {
+		HandleError(err, logging.GetLogger(), w)
+		return
+	}
 }
 
 func ComparisonCpuMb(w http.ResponseWriter, r *http.Request) {
@@ -933,378 +947,370 @@ func DeleteCpu(w http.ResponseWriter, r *http.Request) {
 
 func ListProducts(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	value := r.URL.Query().Get("element")
-	var tmplName string
-	var itemsStruct []interface{}
-	dbName := "shop"
-	var collectionName string
+	productType := r.URL.Query().Get("productType")
+	//listCompatibleOnly := r.URL.Query().Get("listCompatibleOnly")
 
-	switch value {
-	case "cpu":
-		collectionName = "cpu"
-		tmplName = "listCpu.html"
-	case "cooling":
-		collectionName = "cooling"
-		tmplName = "listCooling.html"
-	case "motherboard":
-		collectionName = "motherboard"
-		tmplName = "listMotherboard.html"
-	case "housing":
-		collectionName = "housing"
-		tmplName = "listHousing.html"
-	case "hdd":
-		collectionName = "hdd"
-		tmplName = "listHdd.html"
-	case "ssd":
-		collectionName = "ssd"
-		tmplName = "listSsd.html"
-	case "powersupply":
-		collectionName = "powersupply"
-		tmplName = "listPowersupply.html"
-	case "gpu":
-		collectionName = "gpu"
-		tmplName = "listGpu.html"
-	case "ram":
-		collectionName = "ram"
-		tmplName = "listRam.html"
-	default:
-		logger.Infof("Error: failed to List Products!")
+	var productsList []data.Product
+	tmpl := template.Must(template.ParseFiles("html/listProducts.html"))
+
+	filter := getProductsFilter(productType, r)
+
+	productsList, err := productsListing(productType, filter, w)
+	if err != nil {
+		HandleError(err, logger, w)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/" + tmplName))
+	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+	build, err := getBuild(r)
 
-	filter := bson.M{}
+	dataToSend := struct {
+		ProductType  string
+		ProductsList []data.Product
+		Build        *data.Build
+		User         data.User
+	}{
+		ProductType:  productType,
+		ProductsList: productsList,
+		Build:        build,
+		User:         user,
+	}
+
+	err = tmpl.Execute(w, dataToSend)
+	if err != nil {
+		HandleError(err, logger, w)
+		return
+	}
+}
+
+func getBuild(r *http.Request) (*data.Build, error) {
+	logger := logging.GetLogger()
+
+	productHeaders, err := getBuildFromCookie(r)
+	if err != nil {
+		logger.Errorf("Failed to list build components: %v", err)
+		return nil, err
+	}
+	//TODO для совместимости получаем FullBuild для отображения получаем Build либо используем только FullBuild а во втором случаем его стандартизируем
+	build := &data.Build{}
+
+	getProduct := func(productType string, productID primitive.ObjectID) (data.Product, error) {
+		products, err := productsListing(productType, bson.M{"_id": productID}, nil)
+		if err != nil || len(products) == 0 {
+			return data.Product{}, err
+		}
+		return products[0], nil
+	}
+
+	for _, header := range productHeaders {
+		product, err := getProduct(header.ProductType, header.ID)
+		if err != nil {
+			logger.Errorf("Error getting product: %s", header.ID)
+			continue
+		}
+
+		switch header.ProductType {
+		case "cpu":
+			build.CPU = product
+		case "motherboard":
+			build.Motherboard = product
+		case "ram":
+			build.RAM = product
+		case "gpu":
+			build.GPU = product
+		case "ssd":
+			build.SSD = product
+		case "hdd":
+			build.HDD = product
+		case "cooling":
+			build.Cooling = product
+		case "powersupply":
+			build.PowerSupply = product
+		case "housing":
+			build.Housing = product
+		default:
+			logger.Errorf("Unknown product type: %s", header.ProductType)
+		}
+	}
+	return build, nil
+}
+
+func productsListing(productType string, filter bson.M, w http.ResponseWriter) ([]data.Product, error) {
+	logger := logging.GetLogger()
+
+	dbName := "shop"
+	collectionName, _, err := defineStruct(productType)
+	if err != nil {
+		return nil, err
+	}
+	var productsList []data.Product
 
 	cur, err := data.GetProducts(dbName, collectionName, filter)
 	if err != nil {
-		logger.Infof("Error when trying to get products: %v", err)
-		return
+		logger.Errorf("Error when trying to get products: %v", err)
+		return nil, err
 	}
 	defer func(cur *mongo.Cursor, ctx context.Context) {
-		err := cur.Close(ctx)
+		err = cur.Close(ctx)
 		if err != nil {
-			logger.Infof("Error when trying to close cursor: %v", err)
+			logger.Errorf("Error when trying to close cursor: %v", err)
 			return
 		}
 	}(cur, context.TODO())
 
 	for cur.Next(context.TODO()) {
-		switch value {
-		case "cpu":
-			var cpuItem data.Cpu
-			err := cur.Decode(&cpuItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, cpuItem)
-		case "cooling":
-			var coolingItem data.Cooling
-			err := cur.Decode(&coolingItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, coolingItem)
-		case "motherboard":
-			var motherboardItem data.Motherboard
-			err := cur.Decode(&motherboardItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, motherboardItem)
-		case "housing":
-			var housingItem data.Housing
-			err := cur.Decode(&housingItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, housingItem)
-		case "hdd":
-			var hddItem data.Hdd
-			err := cur.Decode(&hddItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, hddItem)
-		case "ssd":
-			var ssdItem data.Ssd
-			err := cur.Decode(&ssdItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, ssdItem)
-		case "powersupply":
-			var powerSupplyItem data.PowerSupply
-			err := cur.Decode(&powerSupplyItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, powerSupplyItem)
-		case "gpu":
-			var gpuItem data.Gpu
-			err := cur.Decode(&gpuItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, gpuItem)
-		case "ram":
-			var ramItem data.Ram
-			err := cur.Decode(&ramItem)
-			if err != nil {
-				logger.Infof("error: %v", err)
-				continue
-			}
-			itemsStruct = append(itemsStruct, ramItem)
-		}
-	}
-
-	if err := cur.Err(); err != nil {
-		logger.Infof("error: %v", err)
-	}
-
-	logger.Infof("Found multiple items: %v", len(itemsStruct))
-
-	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
-	dataToSend := []interface{}{itemsStruct, user.UserInfo.Name}
-
-	err = tmpl.Execute(w, dataToSend)
-	if err != nil {
-		logger.Infof("error: %v", err)
-	}
-}
-
-func decodeProduct(productType string, cur *mongo.Cursor, logger *logging.Logger, item interface{}) interface{} {
-	for cur.Next(context.TODO()) {
 		switch productType {
 		case "cpu":
-			var itemCpu data.Cpu
-			err := cur.Decode(&itemCpu)
+			var cpuItem data.Cpu
+			err = cur.Decode(&cpuItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemCpu
-		case "clg":
-			var itemCooling data.Cooling
-			err := cur.Decode(&item)
+			productsList = append(productsList, cpuItem.Standardize())
+		case "cooling":
+			var coolingItem data.Cooling
+			err = cur.Decode(&coolingItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemCooling
-		case "mbd":
-			var itemMotherboard data.Motherboard
-			err := cur.Decode(&item)
+			productsList = append(productsList, coolingItem.Standardize())
+		case "motherboard":
+			var motherboardItem data.Motherboard
+			err = cur.Decode(&motherboardItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemMotherboard
-		case "hsg":
-			var itemHosuing data.Housing
-			err := cur.Decode(&item)
+			productsList = append(productsList, motherboardItem.Standardize())
+		case "housing":
+			var housingItem data.Housing
+			err = cur.Decode(&housingItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemHosuing
+			productsList = append(productsList, housingItem.Standardize())
 		case "hdd":
-			var itemHdd data.Hdd
-			err := cur.Decode(&item)
+			var hddItem data.Hdd
+			err = cur.Decode(&hddItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemHdd
+			productsList = append(productsList, hddItem.Standardize())
 		case "ssd":
-			var itemSsd data.Ssd
-			err := cur.Decode(&item)
+			var ssdItem data.Ssd
+			err = cur.Decode(&ssdItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemSsd
-		case "pwr":
-			var itemPowerSupply data.PowerSupply
-			err := cur.Decode(&item)
+			productsList = append(productsList, ssdItem.Standardize())
+		case "powersupply":
+			var powerSupplyItem data.PowerSupply
+			err = cur.Decode(&powerSupplyItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemPowerSupply
+			productsList = append(productsList, powerSupplyItem.Standardize())
 		case "gpu":
-			var itemGpu data.Gpu
-			err := cur.Decode(&item)
+			var gpuItem data.Gpu
+			err = cur.Decode(&gpuItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemGpu
+			productsList = append(productsList, gpuItem.Standardize())
 		case "ram":
-			var itemRam data.Ram
-			err := cur.Decode(&item)
+			var ramItem data.Ram
+			err = cur.Decode(&ramItem)
 			if err != nil {
 				logger.Infof("error: %v", err)
 				continue
 			}
-			item = itemRam
+			productsList = append(productsList, ramItem.Standardize())
+		default:
+			logger.Errorf("Error: invalid product type value!")
+			return productsList, errors.New("invalid product type")
 		}
 	}
-	return item
+
+	if err = cur.Err(); err != nil {
+		logger.Error(err.Error())
+	}
+
+	logger.Infof("Found multiple items: %v", len(productsList))
+	return productsList, nil
+}
+
+func decodeProduct(cur *mongo.Cursor, item interface{}) error {
+	logger := logging.GetLogger()
+	for cur.Next(context.TODO()) {
+		err := cur.Decode(item)
+		if err != nil {
+			logger.Errorf("error: %v", err)
+			continue
+		}
+		return nil
+	}
+	return nil
 }
 
 func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	value := r.FormValue("showProduct")[0:3]
-	var tmplName string
+	productType := r.FormValue("productType")
 	dbName := "shop"
-	var collectionName string
-	var item interface{}
 
-	switch value {
-	case "cpu":
-		collectionName = "cpu"
-		tmplName = "fullListCpu.html"
-		item = data.Cpu{}
-	case "clg":
-		collectionName = "cooling"
-		tmplName = "fullListCooling.html"
-		item = data.Cooling{}
-	case "mbd":
-		collectionName = "motherboard"
-		tmplName = "fullListMotherboard.html"
-		item = data.Motherboard{}
-	case "hsg":
-		collectionName = "housing"
-		tmplName = "fullListHousing.html"
-		item = data.Housing{}
-	case "hdd":
-		collectionName = "hdd"
-		tmplName = "fullListHdd.html"
-		item = data.Hdd{}
-	case "ssd":
-		collectionName = "ssd"
-		tmplName = "fullListSsd.html"
-		item = data.Ssd{}
-	case "pwr":
-		collectionName = "powersupply"
-		tmplName = "fullListPowersupply.html"
-		item = data.PowerSupply{}
-	case "gpu":
-		collectionName = "gpu"
-		tmplName = "fullListGpu.html"
-		item = data.Gpu{}
-	case "ram":
-		collectionName = "ram"
-		tmplName = "fullListRam.html"
-		item = data.Ram{}
-	default:
-		logger.Infof("Error: failed to Show Product Info!")
-		return
-	}
-
-	err := data.Init(dbName, collectionName)
+	collectionName, item, err := defineStruct(productType)
 	if err != nil {
+		HandleError(err, logger, w)
 		return
 	}
+
+	err = data.Init(dbName, collectionName)
 	defer data.CloseConnection()
 
-	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("showProduct")[13:37])
+	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
 	filter := bson.M{"_id": ObjID}
 
 	cur, err := data.Collection.Find(context.TODO(), filter)
 	if err != nil {
-		logger.Infof("error: %v", err)
+		HandleError(err, logger, w)
+		return
 	}
-	defer cur.Close(context.TODO())
+	defer func(cur *mongo.Cursor, ctx context.Context) {
+		err = cur.Close(ctx)
+		if err != nil {
+			logger.Errorf("cursor error: %v", err)
+		}
+	}(cur, context.TODO())
 
-	tmpl := template.Must(template.ParseFiles("html/" + tmplName))
+	tmpl := template.Must(template.ParseFiles("html/productInformation.html"))
 
-	item = decodeProduct(value, cur, logger, item)
+	err = decodeProduct(cur, item)
 
-	if err := cur.Err(); err != nil {
-		logger.Infof("error: %v", err)
+	if err != nil {
+		HandleError(err, logger, w)
+		return
+	}
+
+	if err = cur.Err(); err != nil {
+		logger.Errorf("error: %v", err)
 	}
 
 	logger.Infof("Found Item: %v", item)
 
-	err = tmpl.Execute(w, item)
+	dataToSend := struct {
+		ProductType string
+		Product     interface{}
+		User        data.User
+	}{
+		ProductType: productType,
+		Product:     item,
+		User:        data.ShowUser(r),
+	}
+
+	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
-		logger.Infof("error: %v", err)
+		HandleError(err, logger, w)
+		return
 	}
 }
 
-func FilterCpu(w http.ResponseWriter, r *http.Request) {
+func appendIntFilterParameters(parameterValues []string, result *[]int) {
+	logger := logging.GetLogger()
+	for _, value := range parameterValues {
+		parameter, err := strconv.Atoi(value)
+		if err != nil {
+			logger.Errorf("Error parsing core value: %v", err)
+			continue
+		}
+		*result = append(*result, parameter)
+	}
+}
+
+func appendFloatFilterParameters(parameterValues []string, result *[]float64) {
+	logger := logging.GetLogger()
+	for _, value := range parameterValues {
+		parameter, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			logger.Errorf("Error parsing core value: %v", err)
+			continue
+		}
+		*result = append(*result, parameter)
+	}
+}
+
+func getInterval(from string, to string) (int, int, error) {
+	logger := logging.GetLogger()
+	var minValue, maxValue int
+	var err error
+	if from != "" {
+		minValue, err = strconv.Atoi(from)
+		if err != nil {
+			logger.Errorf("Error parsing price from: %v", err)
+			return minValue, maxValue, err
+		}
+	} else {
+		minValue = 0
+	}
+
+	if to != "" {
+		maxValue, err = strconv.Atoi(to)
+		if err != nil {
+			logger.Errorf("Error parsing price to: %v", err)
+			return minValue, maxValue, err
+		}
+	} else {
+		maxValue = 9999999
+	}
+
+	if minValue > maxValue {
+		temp := minValue
+		minValue = maxValue
+		maxValue = temp
+	}
+	return minValue, maxValue, nil
+}
+
+func filterCpu(r *http.Request) bson.M {
 	logger := logging.GetLogger()
 
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		logger.Errorf("Could not parse form: %v", err)
+		return nil
+	}
 
 	var manufacturers []string
 	var categories []string
 	var cores []int
-	var priceFrom, priceTo float64
+	var threads []int
+	var priceFrom, priceTo int
 	var ramTypes []string
 	var sockets []string
-	var pcieVersions []float64
+	var pcie []int
 
-	manufacturers = r.Form["manufacturer"]
-	categories = r.Form["category"]
-	coreValues := r.Form["cores"]
-	for _, value := range coreValues {
-		core, err := strconv.Atoi(value)
-		if err != nil {
-			logger.Infof("Error parsing core value: %v", err)
-			continue
-		}
-		cores = append(cores, core)
-	}
-	priceFromStr := r.Form.Get("price-from")
-	priceToStr := r.Form.Get("price-to")
+	manufacturers = r.Form["Manufacturer"]
+	categories = r.Form["Category"]
+	coreValues := r.Form["Cores"]
+	appendIntFilterParameters(coreValues, &cores)
 
-	var err error
-	if priceFromStr != "" {
-		priceFrom, err = strconv.ParseFloat(priceFromStr, 64)
-		if err != nil {
-			logger.Infof("Error parsing price from: %v", err)
-		}
-	} else {
-		priceFrom = 0
-	}
+	threadsValues := r.Form["Threads"]
+	appendIntFilterParameters(threadsValues, &threads)
 
-	if priceToStr != "" {
-		priceTo, err = strconv.ParseFloat(priceToStr, 64)
-		if err != nil {
-			logger.Infof("Error parsing price to: %v", err)
-		}
-	} else {
-		priceTo = 999999
-	}
+	priceFromStr := r.Form.Get("Price-min")
+	priceToStr := r.Form.Get("Price-max")
 
-	if priceFrom > priceTo {
-		temp := priceFrom
-		priceFrom = priceTo
-		priceTo = temp
-	}
+	priceFrom, priceTo, err = getInterval(priceFromStr, priceToStr)
 
 	ramTypes = r.Form["ram-type"]
 	sockets = r.Form["socket"]
 	pcieValues := r.Form["pcie-version"]
-	for _, value := range pcieValues {
-		pcie, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			logger.Infof("Error parsing PCIE version: %v", err)
-			continue
-		}
-		pcieVersions = append(pcieVersions, pcie)
-	}
+	appendIntFilterParameters(pcieValues, &pcie)
 
 	filter := bson.M{}
 
@@ -1331,7 +1337,18 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(cores) > 0 {
-		filter["cores.p-cores"] = bson.M{"$in": cores}
+		filter = bson.M{
+			"$expr": bson.M{
+				"$in": bson.A{
+					bson.M{"$add": bson.A{"$cores.p-cores", "$cores.e-cores"}},
+					cores,
+				},
+			},
+		}
+	}
+
+	if len(threads) > 0 {
+		filter["cores.threads"] = bson.M{"$in": threads}
 	}
 
 	if priceFrom != 0 || priceTo != 0 {
@@ -1346,57 +1363,213 @@ func FilterCpu(w http.ResponseWriter, r *http.Request) {
 		filter["main.socket"] = bson.M{"$in": sockets}
 	}
 
-	if len(pcieVersions) > 0 {
-		filter["pci-e"] = bson.M{"$in": pcieVersions}
+	if len(pcie) > 0 {
+		filter["pci-e"] = bson.M{"$in": pcie}
 	}
 
 	logger.Infof("Set filter: %v", filter)
+	return filter
+}
 
-	// Connect to MongoDB and fetch filtered CPU data
-	dbName := "shop"
-	collectionName := "cpu"
-	err = data.Init(dbName, collectionName)
-	if err != nil {
-		return
+func getProductsFilter(productType string, r *http.Request) bson.M {
+	var filter bson.M
+
+	switch productType {
+	case "cpu":
+		filter = filterCpu(r)
+	default:
+		filter = bson.M{}
 	}
-	defer data.CloseConnection()
+	return filter
+}
 
-	cur, err := data.Collection.Find(context.Background(), filter)
+func getBuildFromCookie(r *http.Request) ([]data.ProductHeader, error) {
+	logger := logging.GetLogger()
+	userID := data.ShowUser(r).ID.Hex()
+	buildCookie, err := r.Cookie("build" + userID)
+
 	if err != nil {
-		logger.Infof("Error finding CPUs: %v", err)
-		return
-	}
-	defer cur.Close(context.Background())
-
-	var cpuItems []data.Cpu
-	for cur.Next(context.Background()) {
-		var cpuItem data.Cpu
-		err := cur.Decode(&cpuItem)
-		if err != nil {
-			logger.Infof("Error decoding CPU item: %v", err)
-			continue
+		if errors.Is(err, http.ErrNoCookie) {
+			return []data.ProductHeader{}, nil
 		}
-		cpuItems = append(cpuItems, cpuItem)
-		logger.Info(cpuItem)
+		return nil, err
 	}
-	if err := cur.Err(); err != nil {
-		logger.Infof("Error iterating cursor: %v", err)
+
+	decodedValue, err := url.QueryUnescape(buildCookie.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Decoded Build Cookie Value:", decodedValue)
+
+	var build []data.ProductHeader
+	err = json.Unmarshal([]byte(decodedValue), &build)
+	if err != nil {
+		logger.Errorf("Error unmarshalling build cookie: %v", err)
+		logger.Errorf("Build Cookie Value (Raw): %v", decodedValue)
+
+		return []data.ProductHeader{}, nil
+	}
+
+	return build, nil
+}
+
+func saveBuildToCookie(w http.ResponseWriter, r *http.Request, build []data.ProductHeader) error {
+	logger := logging.GetLogger()
+	buildJSON, err := json.Marshal(build)
+	if err != nil {
+		return err
+	}
+
+	userID := data.ShowUser(r).ID.Hex()
+
+	encodedValue := url.QueryEscape(string(buildJSON))
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "build" + userID,
+		Value:   encodedValue,
+		Expires: time.Now().Add(240 * time.Hour),
+		Path:    "/",
+	})
+
+	logger.Infof("Cookie with name: %s was saved.", userID)
+	return nil
+}
+
+/*func GetBuild(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	userBuild, err := getCartFromCookie(r)
+	if err != nil {
+		HandleError(errors.New("error getting build"), logger, w)
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("html/listCpu.html"))
-	logger.Infof("Found multiple items: %v", len(cpuItems))
-
-	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
-	dataToSend := []interface{}{cpuItems, user.UserInfo.Name}
-
-	err = tmpl.Execute(w, dataToSend)
-	if err != nil {
-		logger.Infof("error: %v", err)
-	}
-
-	if err != nil {
-		logger.Infof("Error executing template: %v", err)
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(userBuild); err != nil {
+		HandleError(errors.New("error encoding build data"), logger, w)
 		return
 	}
+}*/
+
+func AddToBuild(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	dbName := "shop"
+	productType := r.FormValue("productType")
+
+	collectionName, product, err := defineStruct(productType)
+	if err != nil {
+		HandleError(err, logger, w)
+		return
+	}
+
+	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
+	if err != nil {
+		logger.Errorf("Invalid productID: %s", r.FormValue("productID"))
+		HandleError(err, logger, w)
+		return
+	}
+
+	result, err := data.GetProductById(dbName, collectionName, ObjID)
+	if err != nil {
+		logger.Errorf("Error getting product: %s", r.FormValue("productID"))
+		HandleError(err, logger, w)
+		return
+	}
+
+	err = result.Decode(product)
+	if err != nil {
+		logger.Errorf("Error decoding product: %v", product)
+		HandleError(err, logger, w)
+		return
+	}
+
+	item, err := extractProductHeaderFromProduct(productType, product)
+	if err != nil {
+		logger.Errorf("Error extracting item from product: %v", err)
+		HandleError(err, logger, w)
+		return
+	}
+
+	var userBuild []data.ProductHeader
+	userBuild, err = getBuildFromCookie(r)
+	if err != nil {
+		logger.Infof("Error getting build: %v", err)
+		HandleError(err, logger, w)
+		return
+	}
+
+	found := false
+	for i, buildItem := range userBuild {
+		if buildItem.ID == item.ID {
+			http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+			logger.Infof("Product is already in build: %v", item)
+			fmt.Println(userBuild)
+			return
+		}
+		if buildItem.ProductType == item.ProductType {
+			userBuild[i] = item
+			found = true
+			logger.Infof("Item in build with type %s was replaced by: %v", item.ProductType, item)
+			break
+		}
+	}
+
+	if !found {
+		userBuild = append(userBuild, item)
+	}
+
+	err = saveBuildToCookie(w, r, userBuild)
+	if err != nil {
+		logger.Infof("Error saving build to cookie: %v", err)
+		http.Error(w, "Error saving build", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+	logger.Infof("Product added to build: %v", item)
+	fmt.Println(userBuild)
+}
+
+func extractProductHeaderFromProduct(productType string, product interface{}) (data.ProductHeader, error) {
+	v := reflect.ValueOf(product)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	idField := v.FieldByName("ID")
+
+	if !idField.IsValid() {
+		return data.ProductHeader{}, errors.New("invalid product structure")
+	}
+
+	return data.ProductHeader{
+		ID:          idField.Interface().(primitive.ObjectID),
+		ProductType: productType,
+	}, nil
+}
+
+func DeleteFromBuild(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	productType := r.FormValue("productType")
+	userBuild, err := getBuildFromCookie(r)
+	if err != nil {
+		HandleError(errors.New("error getting build"), logger, w)
+	}
+	fmt.Println(productType)
+
+	var updatedBuild []data.ProductHeader
+	for _, item := range userBuild {
+		if item.ProductType != productType {
+			updatedBuild = append(updatedBuild, item)
+		}
+	}
+
+	err = saveBuildToCookie(w, r, updatedBuild)
+	if err != nil {
+		logger.Errorf("Error saving updated build to cookie: %v", err)
+		HandleError(errors.New("error saving updated build"), logger, w)
+		return
+	}
+
+	logger.Infof("Product deleted from cart: %v", productType)
 }

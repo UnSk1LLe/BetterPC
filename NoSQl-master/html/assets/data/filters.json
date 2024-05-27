@@ -1,0 +1,65 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UnSk1LLe/BetterPC.git"
+  },
+  "private": true,
+  "cpuFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Intel", "AMD"],
+    "Socket": ["AM5", "AM4", "LGA 1700", "LGA 1200", "LGA 1151-v2", "LGA 1151"],
+    "Category": ["Intel Core i9", "Intel Core i7", "Intel Core i5", "Intel Core i3", "Intel Pentium", "Intel Celeron",
+    "AMD Ryzen Threadripper", "AMD Ryzen 9", "AMD Ryzen 7", "AMD Ryzen 5", "AMD Ryzen 3", "AMD Athlon"],
+    "P-Cores": [2, 4, 6, 8, 10, 12, 16, 18, 24, 32, 64],
+    "TDP": {
+      "min": 0,
+      "max": 500
+    },
+    "Year": [2018, 2019, 2020, 2021, 2022, 2023, 2024],
+    "Ram Type": ["DDR3", "DDR4", "DDR5"],
+    "PCI-E": ["3.0", "4.0", "5.0"],
+    "Integrated graphics": ["yes", "no"]
+  },
+  "motherboardFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Asrock", "ASUS", "Gigabyte", "MSI"],
+    "Socket": ["AM5", "AM4", "LGA 1700", "LGA 1200", "LGA 1151-v2", "LGA 1151"],
+    "Intel chipset groups": ["Z", "B", "H", "Q"],
+    "AMD chipset groups": ["X", "B", "A"],
+    "Form-factor": ["E-ATX", "Standard-ATX", "Micro-ATX", "Mini-ITX"],
+    "Ram type": ["DDR3", "DDR4", "DDR5"],
+    "Ram slots": [2, 4, 8],
+    "M2 interfaces": [0, 1, 2, 3, 4, 5],
+    "P-Cores": [2, 4, 6, 8, 10, 12, 16, 18, 24, 32, 64],
+    "For CPU": ["Intel", "AMD"],
+    "PCI-E": ["3.0", "4.0", "5.0"]
+  },
+  "powersupplyFilters": {
+    "Price": {
+      "min": 0,
+      "max": 10000000
+    },
+    "Manufacturer": ["Chieftec", "Asrock", "ASUS", "ColorFul", "Deepcool", "GIGABYTE", "AeroCool", "ZALMAN", "Cougar", "be quiet!", "Gamemax"],
+    "Output power": {
+      "min": 0,
+      "max": 10000
+    },
+    "Modular": ["fully", "partially", "no"],
+    "Form-factor": ["ATX", "FlexATX", "SFX", "TFX"],
+    "GPU power": ["16 pin (12VHPWR)", "6+2 pin", "6+2 pin x2", "6+2 pin x3", "6+2 pin x4"],
+    "CPU power": ["4+4 pin", "4+4 pin x2", "8 pin"]
+  }
+}

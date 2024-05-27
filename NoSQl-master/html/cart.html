@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPU Search</title>
+    <title>User Cart</title>
     <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
 </head>
 <body>
@@ -14,15 +14,15 @@
                 <li class="dropdown">
                     <a href="/shop" class="dropbtn catalog-button">Catalog</a>
                     <div class="dropdown-content">
-                        <a href="/listProducts?element=cpu">CPU</a>
-                        <a href="/listProducts?element=gpu">GPU</a>
-                        <a href="/listProducts?element=motherboard">Motherboards</a>
-                        <a href="/listProducts?element=ram">RAM</a>
-                        <a href="/listProducts?element=powersupply">Power supply</a>
-                        <a href="/listProducts?element=ssd">SSD</a>
-                        <a href="/listProducts?element=hdd">HDD</a>
-                        <a href="/listProducts?element=cooling">Cooling</a>
-                        <a href="/listProducts?element=housing">Housing</a>
+                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=gpu">GPU</a>
+                        <a href="/listProducts?productType=motherboard">Motherboards</a>
+                        <a href="/listProducts?productType=ram">RAM</a>
+                        <a href="/listProducts?productType=powersupply">Power supply</a>
+                        <a href="/listProducts?productType=ssd">SSD</a>
+                        <a href="/listProducts?productType=hdd">HDD</a>
+                        <a href="/listProducts?productType=cooling">Cooling</a>
+                        <a href="/listProducts?productType=housing">Housing</a>
                     </div>
                 </li>
             </ul>
@@ -42,8 +42,8 @@
                 <ul>
                     <li class="dropdown">
                         <span>
-                            <a href="#" class="dropbtn catalog-button">{{ index . 1 }}</a>
-                        </span>
+                            <a href="#" class="dropbtn catalog-button">{{ .User.UserInfo.Name }}</a>
+                         </span>
                         <div class="dropdown-content">
                             <a href="/showUserProfile">Profile</a>
                             <a href="/logout">Log out</a>
@@ -58,14 +58,14 @@
     <div id="results">
         <h2>Cart Items</h2>
         <div id="cart-list">
-                {{ range $index, $item := index . 0 }}
-                <div class="cpu-card" data-index="{{ $index }}" data-max-amount="{{ $item.MaxAmount }}" data-price="{{ $item.Price }}">
-                    <div class="cpu-image">
-                        <img src="assets/icons/s1.jpg" alt="Product Image">
+                {{ range $index, $item := .UserCart }}
+                <div class="product-card" data-index="{{ $index }}" data-max-amount="{{ $item.MaxAmount }}" data-price="{{ $item.Price }}">
+                    <div class="product-image">
+                        <img src="./assets/images/{{$item.ItemHeader.ProductType}}.jpg" alt="Product Image">
                     </div>
-                    <div class="cpu-details">
+                    <div class="product-details">
                         <h3 class="product-name">{{ $item.Manufacturer}} {{ $item.Model }}</h3>
-                        <div class="cpu-info">
+                        <div class="product-info">
                             <p>Price: <span id="price{{ $index }}">{{ $item.Price }}</span> ₸</p>
                             <div class="quantity">
                                 <button type="button" onclick="changeQuantity({{ $index }}, 'decrease')">&lt;</button>
@@ -76,10 +76,8 @@
                                 Max amount is {{ $item.MaxAmount }}
                             </p>
                         </div>
-                        <div class="cpu-actions">
-                            <form method="post" action="/showProduct">
-                                <button class="buy-button" name="showProduct" type="submit" value="cpu{{ $item.ItemHeader.ID }}">Full</button>
-                            </form>
+                        <div class="product-actions">
+                            <button class="buy-button" name="showProduct" type="button" onclick="showProduct('{{$item.ItemHeader.ProductType}}', '{{ $item.ItemHeader.ID }}')">Full</button>
                             <button class="compare-button" type="button" onclick="confirmDelete('{{ $item.ItemHeader.ID }}')">Delete</button>
                         </div>
                     </div>

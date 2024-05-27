@@ -97,13 +97,18 @@ func GetUserByID(ID primitive.ObjectID) (User, error) {
 }
 
 func UpdateUser(filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
-	err := Init("test", "users")
-	if err != nil {
-		return nil, err
+	usersCollection := UsersCollection
+	if usersCollection == nil {
+		err := Init("test", "users")
+		if err != nil {
+			return nil, err
+		}
+		usersCollection = Collection
 	}
-	defer CloseConnection()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	result, err := Collection.UpdateOne(context.TODO(), filter, update)
+	result, err := usersCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return nil, err
 	}

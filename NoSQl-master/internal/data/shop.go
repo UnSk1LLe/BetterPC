@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
+	"strconv"
 )
 
 var CpuCollection *mongo.Collection
@@ -18,7 +19,31 @@ var HddCollection *mongo.Collection
 var HousingCollection *mongo.Collection
 var PowerSupplyCollection *mongo.Collection
 
-type CompatibilityMode struct {
+type ProductHeader struct {
+	ID          primitive.ObjectID
+	ProductType string
+}
+
+type Product struct {
+	ProductHeader ProductHeader
+	General       General
+	Name          string
+	Description   string
+}
+
+type Build struct {
+	CPU         Product
+	Motherboard Product
+	RAM         Product
+	GPU         Product
+	SSD         Product
+	HDD         Product
+	Cooling     Product
+	PowerSupply Product
+	Housing     Product
+}
+
+type FullBuild struct {
 	CPU         Cpu
 	Motherboard Motherboard
 	RAM         Ram
@@ -250,6 +275,104 @@ func GetProductById(dbName string, collectionName string, ID primitive.ObjectID)
 
 	result := Collection.FindOne(context.TODO(), bson.M{"_id": ID})
 	return result, nil
+}
+
+func (cpu Cpu) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = cpu.ID
+	product.ProductHeader.ProductType = "cpu"
+	product.General = cpu.General
+	product.Name = cpu.Main.Category + " " + cpu.General.Model
+	var cores string
+	if cpu.Cores.Ecores > 0 {
+		cores = "P-cores: " + strconv.Itoa(cpu.Cores.Pcores) + " E-cores: " + strconv.Itoa(cpu.Cores.Ecores) + ","
+	} else {
+		cores = strconv.Itoa(cpu.Cores.Pcores) + ","
+	}
+	product.Description = cpu.Main.Category + ", " + cpu.Main.Generation + " Generation, " +
+		cpu.Main.Socket + " Socket, " + "Cores: " + cores + " Threads: " + strconv.Itoa(cpu.Cores.Threads) +
+		", Technical process " + strconv.Itoa(cpu.Cores.TechnicalProcess) + " nm, "
+	return product
+}
+
+func (motherboard Motherboard) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = motherboard.ID
+	product.ProductHeader.ProductType = "motherboard"
+	product.Name = motherboard.General.Model
+	product.General = motherboard.General
+	product.Description = "Motherboard Description"
+	return product
+}
+
+func (cooling Cooling) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = cooling.ID
+	product.ProductHeader.ProductType = "cooling"
+	product.Name = cooling.General.Model
+	product.General = cooling.General
+	product.Description = "Cooling Description"
+	return product
+}
+
+func (ram Ram) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = ram.ID
+	product.ProductHeader.ProductType = "ram"
+	product.Name = ram.General.Model
+	product.General = ram.General
+	product.Description = "RAM Description"
+	return product
+}
+
+func (ssd Ssd) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = ssd.ID
+	product.ProductHeader.ProductType = "ssd"
+	product.Name = ssd.General.Model
+	product.General = ssd.General
+	product.Description = "SSD Description"
+	return product
+}
+
+func (hdd Hdd) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = hdd.ID
+	product.ProductHeader.ProductType = "hdd"
+	product.Name = hdd.General.Model
+	product.General = hdd.General
+	product.Description = "HDD Description"
+	return product
+}
+
+func (gpu Gpu) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = gpu.ID
+	product.ProductHeader.ProductType = "gpu"
+	product.Name = gpu.General.Model
+	product.General = gpu.General
+	product.Description = "GPU Description"
+	return product
+}
+
+func (powerSupply PowerSupply) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = powerSupply.ID
+	product.ProductHeader.ProductType = "powersupply"
+	product.Name = powerSupply.General.Model
+	product.General = powerSupply.General
+	product.Description = "Power Supply Description"
+	return product
+}
+
+func (housing Housing) Standardize() Product {
+	var product Product
+	product.ProductHeader.ID = housing.ID
+	product.ProductHeader.ProductType = "housing"
+	product.Name = housing.General.Model
+	product.General = housing.General
+	product.Description = "Housing Description"
+	return product
 }
 
 func GetProducts(dbName string, collectionName string, filter bson.M) (*mongo.Cursor, error) {

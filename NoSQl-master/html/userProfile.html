@@ -46,10 +46,10 @@
                     <div class="order-details" style="display: none;">
                         {{ range .Items }}
                         <div class="item-details" data-price="{{ .Price }}" data-amount="{{ .ItemHeader.Amount }}">
-                            <div class="cpu-image">
-                                <img src="assets/icons/s1.jpg" alt="Product Image">
+                            <div class="product-image">
+                                <img src="./assets/images/{{.ItemHeader.ProductType}}.jpg" alt="Product Image">
                             </div>
-                            <div class="cpu-details">
+                            <div class="product-details">
                                 <h3 class="product-name">{{ .Manufacturer }} {{ .Model }}</h3>
                                 <p>Amount: <span class="amount">{{ .ItemHeader.Amount }}</span></p>
                                 <p>Price: <span class="total-price"></span> ₸</p>

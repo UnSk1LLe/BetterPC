@@ -6,11 +6,10 @@ import (
 	"MongoDb/pkg/logging"
 	"MongoDb/pkg/session"
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"net/http"
@@ -28,61 +27,50 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 		name := r.FormValue("name")
 		surname := r.FormValue("surname")
-		dobString := r.FormValue("dob") // Retrieve dob as string
+		dobString := r.FormValue("dob") //string
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		confirmPassword := r.FormValue("confirm-password")
 
 		if name == "" || surname == "" || dobString == "" || email == "" || password == "" || confirmPassword == "" {
-			http.Error(w, "Not all fields are filled!", http.StatusBadRequest)
+			_ = showMessage("/shop", "Not all fields are filled!", w)
 			return
 		}
 
-		dob, err := time.Parse("2006-01-02", dobString) // Parse dob string to time.Time
+		dob, err := time.Parse("2006-01-02", dobString) //Parse dob string to time.Time
 		if err != nil {
-			http.Error(w, "Invalid date of birth format", http.StatusBadRequest)
+			HandleError(errors.New("invalid date of birth format"), logger, w)
 			return
 		}
 
 		verifiedEmail, err := emailVerification.IsVerifiedEmail(email)
 		logger.Infof("verified email: %v", verifiedEmail)
 		if err != nil || !verifiedEmail {
-			http.Error(w, "Invalid email", http.StatusBadRequest)
+			HandleError(errors.New("invalid email"), logger, w)
 			return
 		}
 
-		/*var count int64
-		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-		count, err = data.Collection.CountDocuments(ctx, bson.M{"emailVerification": emailVerification})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if count > 0 {
-			http.Error(w, "Email already in use", http.StatusBadRequest)
-			return
-		}*/ //oldMethod
 		var recordUser data.User
 		recordUser, err = data.GetUser(email)
 		if err != nil && err.Error() != "mongo: no documents in result" {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			HandleError(errors.New("could not check user email for duplication"), logger, w)
 			return
 		}
 
 		if recordUser.ID != primitive.NilObjectID {
-			http.Error(w, "Email already in use", http.StatusBadRequest)
+			HandleError(errors.New("email already in use"), logger, w)
 			return
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			HandleError(err, logger, w)
 			return
 		}
 
 		token, err := emailVerification.GenerateToken()
 		if err != nil {
-			http.Error(w, "Server error", http.StatusInternalServerError)
+			HandleError(err, logger, w)
 			return
 		}
 
@@ -102,63 +90,54 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 		err = data.CreateUser(recordUser)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			HandleError(err, logger, w)
 		}
 
 		subject := "Verify your email address" //change domain in body!! !! ! !! !
 		body := fmt.Sprintf("Please click the following link to verify your email address: http://localhost:8080/verify?token=%s", token)
 		err = emailVerification.SendEmail(email, subject, body)
 		if err != nil {
-			http.Error(w, "Failed to send verification email", http.StatusInternalServerError)
+			HandleError(errors.New("failed to send verification email"), logger, w)
 			return
 		}
 
 		logger.Infof("USER WAS CREATED: %s", recordUser)
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		messageText := "Your account has been created! Please, check your email to verify your account!"
+		_ = showMessage("/shop", messageText, w)
 		return
 	}
 
 	tmpl := template.Must(template.ParseFiles("html/registrationForm.html"))
-	tmpl.Execute(w, nil)
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		_ = showMessage("/shop", err.Error(), w)
+		return
+	}
 }
 
 func VerifyEmailHandler(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	var err error
+
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		http.Error(w, "Invalid verification link", http.StatusBadRequest)
+		HandleError(errors.New("invalid verification link"), logger, w)
 		return
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-	defer client.Disconnect(ctx)
-
-	usersCollection := client.Database("test").Collection("users")
 	filter := bson.M{"verification_token": token}
 	update := bson.M{"$set": bson.M{"verified": true, "verification_token": ""}}
 
-	result, err := usersCollection.UpdateOne(ctx, filter, update) //TODO make ModifyUser func instead
+	result, err := data.UpdateUser(filter, update)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
 	if result.MatchedCount == 0 {
-		http.Error(w, "Invalid verification token", http.StatusBadRequest)
+		HandleError(errors.New("invalid verification token"), logger, w)
 		return
 	}
-
-	fmt.Fprintln(w, "Email verified successfully")
+	_ = showMessage("/shop", "Email verified successfully!", w)
 }
 
 func RecoverPassword(w http.ResponseWriter, r *http.Request) {
@@ -166,10 +145,11 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	recovery := r.URL.Query().Get("recovery")
 	email := r.FormValue("email")
+	var err error
 
 	if token == "" && recovery == "" {
 		tmpl := template.Must(template.ParseFiles("html/passwordRecovery.html"))
-		err := tmpl.Execute(w, map[string]interface{}{
+		err = tmpl.Execute(w, map[string]interface{}{
 			"Token": token,
 		})
 		if err != nil {
@@ -180,7 +160,7 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if recovery == "linkSent" {
-		token, err := emailVerification.GenerateToken()
+		token, err = emailVerification.GenerateToken()
 		if err != nil {
 			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
@@ -287,19 +267,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		user, err := data.GetUser(loginData.email)
 		if err != nil {
-			http.Error(w, "Invalid email", http.StatusUnauthorized)
+			HandleError(errors.New("invalid email"), logger, w)
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword(user.UserInfo.PasswordHash, []byte(loginData.password))
 		if err != nil {
-			http.Error(w, "Invalid password", http.StatusUnauthorized)
+			HandleError(errors.New("invalid password"), logger, w)
 			return
 		}
 
 		sessionToken, err := session.GenerateSessionToken()
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			HandleError(errors.New("internal server error"), logger, w)
 			return
 		}
 
@@ -307,7 +287,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		update := bson.M{"$set": bson.M{"session_token": sessionToken}}
 		_, err = data.UpdateUser(filter, update)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			HandleError(errors.New("internal server error"), logger, w)
 			return
 		}
 
@@ -319,11 +299,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		http.Redirect(w, r, "/shop", http.StatusSeeOther)
 
-		/*err = data.SetUser(result)
-		if err != nil {
-			http.Error(w, "Empty user struct!", http.StatusNotFound)
-			return
-		}*/
 		logger.Infof("%s LOGGED IN", user.UserInfo.Email)
 		return
 	}
@@ -350,7 +325,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{"$set": bson.M{"session_token": ""}}
 	_, err := data.UpdateUser(filter, update)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		HandleError(errors.New("internal server error"), logger, w)
 	}
 
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -358,7 +333,11 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func Home(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/home.html"))
-	tmpl.Execute(w, data.ShowUser(r))
+	err := tmpl.Execute(w, data.ShowUser(r))
+	if err != nil {
+		HandleError(err, logging.GetLogger(), w)
+		return
+	}
 }
 
 func EditUserInfoForm(w http.ResponseWriter, r *http.Request) {
@@ -366,7 +345,11 @@ func EditUserInfoForm(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
 
-	tmpl.Execute(w, user)
+	err := tmpl.Execute(w, user)
+	if err != nil {
+		HandleError(err, logging.GetLogger(), w)
+		return
+	}
 }
 
 func EditUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -380,16 +363,16 @@ func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		name := r.FormValue("name")
 		surname := r.FormValue("surname")
-		dobString := r.FormValue("dob") // Retrieve dob as string
+		dobString := r.FormValue("dob") //Retrieve dob as string
 
 		if name == "" || surname == "" || dobString == "" {
-			http.Error(w, "Not all fields are filled!", http.StatusBadRequest)
+			HandleError(errors.New("not all fields are filled"), logger, w)
 			return
 		}
 
-		dob, err := time.Parse("2006-01-02", dobString) // Parse dob string to time.Time
+		dob, err := time.Parse("2006-01-02", dobString) //Convert dob string to time.Time
 		if err != nil {
-			http.Error(w, "Invalid date of birth format", http.StatusBadRequest)
+			HandleError(errors.New("invalid date of birth format"), logger, w)
 			return
 		}
 
@@ -404,7 +387,11 @@ func EditUserInfo(w http.ResponseWriter, r *http.Request) {
 
 		_, err = data.Collection.UpdateOne(context.TODO(), filter, update)
 		if err != nil {
-			logger.Infof("A bulk write error occurred: %v", err)
+			logger.Errorf("A bulk write error occurred: %v", err)
+			if err != nil {
+				HandleError(err, logger, w)
+				return
+			}
 			return
 		} else {
 			logger.Infof("User with ID: %s was UPDATED!", ObjID)
@@ -436,7 +423,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 				Value:   "",
 				Expires: time.Unix(0, 0),
 			})
-			logger.Info("Invalid session token.")
+			logger.Errorf("Invalid session token.")
 		}
 
 		ctx := context.WithValue(r.Context(), "user", user)
@@ -478,4 +465,13 @@ func ShowProfile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Response Writer Error!", http.StatusInternalServerError)
 		logger.Errorf("Could not execute template: %v", err)
 	}
+}
+
+func HandleError(err error, logger *logging.Logger, w http.ResponseWriter) {
+	if err != nil {
+		logger.Errorf("error: %v", err)
+		_ = showMessage("/shop", "Error occurred! "+err.Error(), w)
+		return
+	}
+	return
 }

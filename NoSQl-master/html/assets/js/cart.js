@@ -1,11 +1,23 @@
+//Multiplies price by quantity. used onload
+function updatePriceAndQuantity(index) {
+    let quantityElement = document.getElementById('quantity' + index);
+    let currentQuantity = parseInt(quantityElement.textContent);
+    let cardElement = document.querySelector('.product-card[data-index="' + index + '"]');
+    let pricePerUnit = parseInt(cardElement.getAttribute('data-price'));
+    let priceElement = document.getElementById('price' + index);
+
+    priceElement.textContent = currentQuantity * pricePerUnit;
+}
+
+//Changes quantity and price
 function changeQuantity(index, action) {
-    var quantityElement = document.getElementById('quantity' + index);
-    var currentQuantity = parseInt(quantityElement.textContent);
-    var cardElement = document.querySelector('.cpu-card[data-index="' + index + '"]');
-    var maxAmount = parseInt(cardElement.getAttribute('data-max-amount'));
-    var pricePerUnit = parseInt(cardElement.getAttribute('data-price'));
-    var maxWarning = document.getElementById('maxWarning' + index);
-    var priceElement = document.getElementById('price' + index);
+    let quantityElement = document.getElementById('quantity' + index);
+    let currentQuantity = parseInt(quantityElement.textContent);
+    let cardElement = document.querySelector('.product-card[data-index="' + index + '"]');
+    let maxAmount = parseInt(cardElement.getAttribute('data-max-amount'));
+    let pricePerUnit = parseInt(cardElement.getAttribute('data-price'));
+    let maxWarning = document.getElementById('maxWarning' + index);
+    let priceElement = document.getElementById('price' + index);
 
     if (action === 'increase') {
         if (currentQuantity < maxAmount) {
@@ -59,14 +71,22 @@ function checkOrderButton() {
         }
     });
 
-    if (allQuantitiesValid) {
+    if (allQuantitiesValid && quantityElements) {
         createOrderButton.disabled = false;
     } else {
         createOrderButton.disabled = true;
     }
 }
 
-// Initial check when page loads
 window.onload = function() {
     checkOrderButton();
+    let productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(function(card) {
+        let index = card.getAttribute('data-index');
+        updatePriceAndQuantity(index);
+    });
+}
+
+function showProduct(productType, productID) {
+    window.location.href = `/showProduct?productType=${encodeURIComponent(productType)}&productID=${encodeURIComponent(productID)}`;
 }

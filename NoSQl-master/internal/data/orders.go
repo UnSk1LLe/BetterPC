@@ -50,15 +50,21 @@ func (o *Order) CalculateOrderPrice() {
 }
 
 func updateProductAmount(productType string, itemID primitive.ObjectID, amountChange int) error {
-	collection := defineCollection(productType)
+	collection, err := defineCollection(productType)
+	if err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	filter := bson.M{"_id": itemID}
 	update := bson.M{"$inc": bson.M{"general.amount": amountChange}}
-	_, err := collection.UpdateOne(ctx, filter, update)
-	return err
+	_, err = collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func CreateOrder(items []Item, userID primitive.ObjectID) error {
@@ -68,10 +74,16 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 	} else if userID == primitive.NilObjectID {
 		return errors.New("userID cannot be nil")
 	}
+	var collection *mongo.Collection
+	var err error
 
 	//Check availability
 	for _, item := range items {
-		collection := defineCollection(item.ItemHeader.ProductType)
+		collection, err = defineCollection(item.ItemHeader.ProductType)
+		if err != nil {
+			return err
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -80,18 +92,12 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 				Amount int `bson:"amount"`
 			} `bson:"general"`
 		}
-		err := collection.FindOne(ctx, bson.M{"_id": item.ItemHeader.ID}).Decode(&product)
+		err = collection.FindOne(ctx, bson.M{"_id": item.ItemHeader.ID}).Decode(&product)
 		if err != nil {
 			return err
 		}
 		if product.General.Amount < item.ItemHeader.Amount {
 			return fmt.Errorf("not enough amount for product %s", item.ItemHeader.ID.Hex())
-		}
-
-		//Reserve the amount
-		err = updateProductAmount(item.ItemHeader.ProductType, item.ItemHeader.ID, -item.ItemHeader.Amount)
-		if err != nil {
-			return err
 		}
 	}
 
@@ -107,13 +113,19 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := OrdersCollection.InsertOne(ctx, newOrder)
+	_, err = OrdersCollection.InsertOne(ctx, newOrder)
 	if err != nil {
-		//Rollback the reservation
-		for _, item := range items {
-			_ = updateProductAmount(item.ItemHeader.ProductType, item.ItemHeader.ID, item.ItemHeader.Amount)
-		}
+		logger.Errorf("Failed to insert new order: %v", err)
 		return err
+	}
+
+	//Reserve the amount after checking and creating order
+	for _, item := range items {
+		err = updateProductAmount(item.ItemHeader.ProductType, item.ItemHeader.ID, -item.ItemHeader.Amount)
+		if err != nil {
+			logger.Errorf("Failed to update product amount while rollback: %v", err)
+			return err
+		}
 	}
 	logger.Infof("New Order CREATED: %s", newOrder.ID)
 	fmt.Println(newOrder)
@@ -140,6 +152,7 @@ func CancelOrder(orderID primitive.ObjectID) error {
 
 	_, err = OrdersCollection.UpdateOne(ctx, bson.M{"_id": orderID}, bson.M{"$set": bson.M{"status": "Canceled"}})
 	if err != nil {
+		logger.Errorf("Failed to cancel order: %v due to error: %v", orderID, err)
 		return err
 	}
 
@@ -208,7 +221,7 @@ func GetOrdersByUserID(userID primitive.ObjectID, activeOnly bool) ([]Order, err
 	var orders []Order
 	for cursor.Next(ctx) {
 		var order Order
-		err := cursor.Decode(&order)
+		err = cursor.Decode(&order)
 		if err != nil {
 			return nil, err
 		}
@@ -235,20 +248,20 @@ func SetOrderStatus(orderID primitive.ObjectID, status string) error {
 	return nil
 }
 
-func defineCollection(productType string) *mongo.Collection {
+func defineCollection(productType string) (*mongo.Collection, error) {
 	logger := logging.GetLogger()
 	var collection *mongo.Collection
 
 	switch productType {
 	case "cpu":
 		collection = CpuCollection
-	case "mbd":
+	case "motherboard":
 		collection = MotherboardCollection
 	case "gpu":
 		collection = GpuCollection
-	case "clg":
+	case "cooling":
 		collection = CoolingCollection
-	case "hsg":
+	case "housing":
 		collection = HousingCollection
 	case "hdd":
 		collection = HddCollection
@@ -256,11 +269,11 @@ func defineCollection(productType string) *mongo.Collection {
 		collection = SsdCollection
 	case "ram":
 		collection = RamCollection
-	case "pwr":
+	case "powersupply":
 		collection = PowerSupplyCollection
 	default:
-		logger.Errorf("Error: wrong product type!")
-		return nil
+		logger.Errorf("wrong product type: %s", productType)
+		return nil, fmt.Errorf("wrong product type: %s", productType)
 	}
-	return collection
+	return collection, nil
 }
