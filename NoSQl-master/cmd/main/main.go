@@ -26,6 +26,7 @@ func main() {
 	http.HandleFunc("/listProducts", Handlers.AuthMiddleware(Handlers.ListProducts))
 	http.HandleFunc("/addProductToBuild", Handlers.AuthMiddleware(Handlers.AddToBuild))
 	http.HandleFunc("/deleteProductFromBuild", Handlers.AuthMiddleware(Handlers.DeleteFromBuild))
+	http.HandleFunc("/createOrderFromBuild", Handlers.AuthMiddleware(Handlers.CreateOrderFromBuild))
 
 	http.HandleFunc("/getCart", Handlers.AuthMiddleware(Handlers.GetCart))
 	http.HandleFunc("/addProductToCart", Handlers.AuthMiddleware(Handlers.AddToCart))

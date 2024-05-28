@@ -164,20 +164,436 @@
             </div>
         </div>
         {{ else if eq .ProductType "cooling" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Type:</td>
+                        <td>{{ .Product.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Sockets:</td>
+                        <td>{{ range .Product.Sockets }}{{ . }} {{ end }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Fans:</td>
+                        <td>{{ range .Product.Fans }}{{ . }} RPM {{ end }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">TDP:</td>
+                        <td>{{ .Product.Tdp }}W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Noise Level:</td>
+                        <td>{{ .Product.NoiseLevel }} dB</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Mount Type:</td>
+                        <td>{{ .Product.MountType }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Power:</td>
+                        <td>{{ .Product.Power }}W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Height:</td>
+                        <td>{{ .Product.Height }} mm</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "ram" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Capacity:</td>
+                        <td>{{ .Product.Capacity }} GB</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Number:</td>
+                        <td>{{ .Product.Number }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Rank:</td>
+                        <td>{{ .Product.Rank }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Type:</td>
+                        <td>{{ .Product.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Frequency:</td>
+                        <td>{{ .Product.Frequency }} MHz</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Bandwidth:</td>
+                        <td>{{ .Product.Bandwidth }} MB/s</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">CAS Latency:</td>
+                        <td>{{ .Product.CasLatency }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Timing Scheme:</td>
+                        <td>{{ range .Product.TimingScheme }}{{ . }} {{ end }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Voltage:</td>
+                        <td>{{ .Product.Voltage }} V</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Cooling:</td>
+                        <td>{{ .Product.Cooling }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Height:</td>
+                        <td>{{ .Product.Height }} mm</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "ssd" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Type:</td>
+                        <td>{{ .Product.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Capacity:</td>
+                        <td>{{ .Product.Capacity }} GB</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Interface:</td>
+                        <td>{{ .Product.Interface }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Memory Type:</td>
+                        <td>{{ .Product.MemoryType }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Read Speed:</td>
+                        <td>{{ .Product.Read }} MB/s</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Write Speed:</td>
+                        <td>{{ .Product.Write }} MB/s</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">MTFB:</td>
+                        <td>{{ .Product.Mftb }} h</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Size:</td>
+                        <td>{{ range .Product.Size }}{{ . }}x{{ end }}mm</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Weight:</td>
+                        <td>{{ .Product.Weight }} g</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "hdd" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Type:</td>
+                        <td>{{ .Product.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Capacity:</td>
+                        <td>{{ .Product.Capacity }} GB</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Interface:</td>
+                        <td>{{ .Product.Interface }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Write Method:</td>
+                        <td>{{ .Product.WriteMethod }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Transfer Rate:</td>
+                        <td>{{ .Product.TransferRate }} MB/s</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Spindle Speed:</td>
+                        <td>{{ .Product.SpindleSpeed }} RPM</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">MTFB:</td>
+                        <td>{{ .Product.Mftb }} h</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Size:</td>
+                        <td>{{ range .Product.Size }}{{ . }}x{{ end }}mm</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Weight:</td>
+                        <td>{{ .Product.Weight }} g</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "gpu" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Architecture:</td>
+                        <td>{{ .Product.Architecture }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Memory Capacity:</td>
+                        <td>{{ .Product.Memory.Capacity }} GB</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Memory Type:</td>
+                        <td>{{ .Product.Memory.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Memory Interface Width:</td>
+                        <td>{{ .Product.Memory.InterfaceWidth }} bit</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Memory Frequency:</td>
+                        <td>{{ .Product.Memory.Frequency }} MHz</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">GPU Frequency:</td>
+                        <td>{{ .Product.GpuFrequency }} MHz</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Process Size:</td>
+                        <td>{{ .Product.ProcessSize }} nm</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Max Resolution:</td>
+                        <td>{{ .Product.MaxResolution }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Interfaces:</td>
+                        <td>
+                            {{ .Product.Interfaces }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Max Monitors:</td>
+                        <td>{{ .Product.MaxMonitors }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Cooling Type:</td>
+                        <td>{{ .Product.Cooling.Type }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Cooling Fan Number:</td>
+                        <td>{{ .Product.Cooling.FanNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">TDP:</td>
+                        <td>{{ .Product.Tdp }} W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Recommended Power Supply:</td>
+                        <td>{{ .Product.TdpR }} W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Power Supply:</td>
+                        <td>
+                            {{ .Product.PowerSupply }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Slots:</td>
+                        <td>{{ .Product.Slots }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Size:</td>
+                        <td>
+                            {{index .Product.Size 0}}x{{index .Product.Size 1}}x{{index .Product.Size 2}}mm
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "powersupply" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Output Power:</td>
+                        <td>{{ .Product.OutputPower }} W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Connectors:</td>
+                        <td>SATA: {{ .Product.Connectors.Sata }}, Molex: {{ .Product.Connectors.Molex }}, PCI-E:
+                            {{ .Product.Connectors.PciE }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Modular:</td>
+                        <td>{{ if .Product.Modules }}Yes{{ else }}No{{ end }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Motherboard Power:</td>
+                        <td>{{ .Product.MbPower }} pin</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">CPU Power:</td>
+                        <td>{{ .Product.CpuPower }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ else if eq .ProductType "housing" }}
-        <p>{{.ProductType}}</p>
+        <div class="product-item">
+            <div class="product-image">
+                <img src="assets/images/{{.ProductType}}.jpg" alt="product Image">
+            </div>
+            <div class="product-details">
+                <table>
+                    <tr>
+                        <td class="description-label">Manufacturer:</td>
+                        <td>{{ .Product.General.Manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Model:</td>
+                        <td>{{ .Product.General.Model }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Form Factor:</td>
+                        <td>{{ .Product.FormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Drive Bays 3.5":</td>
+                        <td>{{ .Product.DriveBays.D35 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Drive Bays 2.5":</td>
+                        <td>{{ .Product.DriveBays.D25 }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Motherboard Form Factor:</td>
+                        <td>{{ .Product.MbFormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Power Supply Form Factor:</td>
+                        <td>{{ .Product.PsFormFactor }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Expansion Slots:</td>
+                        <td>{{ .Product.ExpansionSlots }}</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Graphic Card Size:</td>
+                        <td>{{ .Product.GraphicCardSize }} mm</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Cooler Height:</td>
+                        <td>{{ .Product.CoolerHeight }} mm</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Size:</td>
+                        <td>
+                            {{index .Product.Size 0}}x{{index .Product.Size 1}}x{{index .Product.Size 2}} mm
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">Weight:</td>
+                        <td>{{ .Product.Weight }} kg</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
         {{ end }}
+
+
 
         <div class="product-actions">
             <h1>Compatibility mode here</h1>

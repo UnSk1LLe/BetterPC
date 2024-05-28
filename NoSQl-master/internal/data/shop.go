@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 var CpuCollection *mongo.Collection
@@ -268,22 +269,22 @@ func (g General) ProductFinalPrice() int {
 	return g.Price - (g.Price * g.Discount / 100)
 }
 
-func GetProductById(dbName string, collectionName string, ID primitive.ObjectID) (*mongo.SingleResult, error) {
-	err := Init(dbName, collectionName)
-	if err != nil {
-		return nil, err
+func GetProductById(collection *mongo.Collection, ID primitive.ObjectID) (*mongo.SingleResult, error) {
+	logger := logging.GetLogger()
+	result := collection.FindOne(context.TODO(), bson.M{"_id": ID})
+	if result.Err() != nil {
+		logger.Errorf(result.Err().Error())
+		return nil, result.Err()
 	}
-	defer CloseConnection()
-
-	result := Collection.FindOne(context.TODO(), bson.M{"_id": ID})
+	logger.Infof("found product with ID <%v> in <%v> collection", ID, collection.Name())
 	return result, nil
 }
 
 func DeleteProductById(productType string, ID primitive.ObjectID) (*mongo.DeleteResult, error) {
 	logger := logging.GetLogger()
-	collection, err := defineCollection(productType)
+	collection, err := DefineCollection(productType)
 	if err != nil {
-		logger.Errorf("Error deleting product of type(%s): %v", productType, err)
+		logger.Errorf("Error deleting product, could not define type <%s>): %v", productType, err)
 		return nil, err
 	}
 	result, err := collection.DeleteOne(context.TODO(), bson.M{"_id": ID})
@@ -319,7 +320,9 @@ func (motherboard Motherboard) Standardize() Product {
 	product.ProductHeader.ProductType = "motherboard"
 	product.Name = motherboard.General.Model
 	product.General = motherboard.General
-	product.Description = "Motherboard Description"
+	product.Description = "Socket: " + motherboard.Socket + ", Chipset: " + motherboard.Chipset +
+		", Form Factor: " + motherboard.FormFactor + ", RAM: " + motherboard.Ram.Type + " " +
+		strconv.Itoa(motherboard.Ram.MaxCapacity) + "GB"
 	return product
 }
 
@@ -329,7 +332,8 @@ func (cooling Cooling) Standardize() Product {
 	product.ProductHeader.ProductType = "cooling"
 	product.Name = cooling.General.Model
 	product.General = cooling.General
-	product.Description = "Cooling Description"
+	product.Description = "Type: " + cooling.Type + ", Sockets: " + strings.Join(cooling.Sockets, ", ") +
+		", Fans: " + strconv.Itoa(len(cooling.Fans)) + ", TDP: " + strconv.Itoa(cooling.Tdp) + "W"
 	return product
 }
 
@@ -339,7 +343,8 @@ func (ram Ram) Standardize() Product {
 	product.ProductHeader.ProductType = "ram"
 	product.Name = ram.General.Model
 	product.General = ram.General
-	product.Description = "RAM Description"
+	product.Description = "Capacity: " + strconv.Itoa(ram.Capacity) + "GB, Type: " + ram.Type +
+		", Frequency: " + strconv.Itoa(ram.Frequency) + "MHz, CAS Latency: " + ram.CasLatency
 	return product
 }
 
@@ -349,7 +354,9 @@ func (ssd Ssd) Standardize() Product {
 	product.ProductHeader.ProductType = "ssd"
 	product.Name = ssd.General.Model
 	product.General = ssd.General
-	product.Description = "SSD Description"
+	product.Description = "Type: " + ssd.Type + ", Capacity: " + strconv.Itoa(ssd.Capacity) + "GB, " +
+		"Interface: " + ssd.Interface + ", Read Speed: " + strconv.Itoa(ssd.Read) + "MB/s, " +
+		"Write Speed: " + strconv.Itoa(ssd.Write) + "MB/s"
 	return product
 }
 
@@ -359,7 +366,8 @@ func (hdd Hdd) Standardize() Product {
 	product.ProductHeader.ProductType = "hdd"
 	product.Name = hdd.General.Model
 	product.General = hdd.General
-	product.Description = "HDD Description"
+	product.Description = "Type: " + hdd.Type + ", Capacity: " + strconv.Itoa(hdd.Capacity) + "GB, " +
+		"Interface: " + hdd.Interface + ", Spindle Speed: " + strconv.Itoa(hdd.SpindleSpeed) + "RPM"
 	return product
 }
 
@@ -369,7 +377,9 @@ func (gpu Gpu) Standardize() Product {
 	product.ProductHeader.ProductType = "gpu"
 	product.Name = gpu.General.Model
 	product.General = gpu.General
-	product.Description = "GPU Description"
+	product.Description = "Architecture: " + gpu.Architecture + ", Memory: " + strconv.Itoa(gpu.Memory.Capacity) +
+		"GB " + gpu.Memory.Type + ", Frequency: " + strconv.Itoa(gpu.GpuFrequency) + "MHz, " +
+		"Max Resolution: " + gpu.MaxResolution
 	return product
 }
 
@@ -379,7 +389,8 @@ func (powerSupply PowerSupply) Standardize() Product {
 	product.ProductHeader.ProductType = "powersupply"
 	product.Name = powerSupply.General.Model
 	product.General = powerSupply.General
-	product.Description = "Power Supply Description"
+	product.Description = "Form Factor: " + powerSupply.FormFactor + ", Output Power: " +
+		strconv.Itoa(powerSupply.OutputPower) + "W, Modular: " + strconv.FormatBool(powerSupply.Modules)
 	return product
 }
 
@@ -389,7 +400,8 @@ func (housing Housing) Standardize() Product {
 	product.ProductHeader.ProductType = "housing"
 	product.Name = housing.General.Model
 	product.General = housing.General
-	product.Description = "Housing Description"
+	product.Description = "Form Factor: " + housing.FormFactor + ", Motherboard Form Factor: " +
+		housing.MbFormFactor + ", Expansion Slots: " + strconv.Itoa(housing.ExpansionSlots)
 	return product
 }
 
@@ -397,15 +409,24 @@ func IsZero(v interface{}) bool {
 	return reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface())
 }
 
-func GetProducts(dbName string, collectionName string, filter bson.M) (*mongo.Cursor, error) {
-	err := Init(dbName, collectionName)
+func GetProducts(collection *mongo.Collection, filter bson.M) (*mongo.Cursor, error) {
+	logger := logging.GetLogger()
+	cur, err := collection.Find(context.TODO(), filter)
 	if err != nil {
+		logger.Errorf("Error getting products from <%s> collection: %v", collection.Name(), err)
 		return nil, err
 	}
-	defer CloseConnection()
-	cur, err := Collection.Find(context.TODO(), filter)
-	if err != nil {
-		return nil, err
-	}
+	logger.Infof("Found products from <%s> collection", collection.Name())
 	return cur, nil
+}
+
+func UpdateProduct(collection *mongo.Collection, filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
+	logger := logging.GetLogger()
+	result, err := collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		logger.Errorf("Error updating product from <%s> collection: %v", collection.Name(), err)
+		return nil, err
+	}
+	logger.Infof("Product from <%s> collection was UPDATED!", collection.Name())
+	return result, nil
 }

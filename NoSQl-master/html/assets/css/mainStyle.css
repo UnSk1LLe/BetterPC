@@ -125,7 +125,6 @@ main {
     height: 0;
 }
 
-/* Style for the slider */
 .slider {
     position: absolute;
     cursor: pointer;
@@ -287,12 +286,12 @@ input:checked + .slider:before {
 }
 
 .detail-actions .delete-btn {
-    background-color: rgb(209, 25, 25); /* Red color for delete button */
+    background-color: rgb(209, 25, 25);
     color: white;
 }
 
 .detail-actions .replace-btn {
-    background-color: #328dda; /* Blue color for replace button */
+    background-color: #328dda;
     color: white;
 }
 
@@ -546,7 +545,7 @@ select {
     color: #fff;
     font-size: 16px;
     cursor: pointer;
-    margin-top: 20px; /* Add top margin */
+    margin-top: 20px;
 }
 
 .submit-button:hover {
@@ -562,7 +561,7 @@ select {
     color: #fff;
     font-size: 16px;
     cursor: pointer;
-    margin-top: 20px; /* Add top margin */
+    margin-top: 20px;
 }
 
 .delete-button {
@@ -574,7 +573,7 @@ select {
     color: #fff;
     font-size: 16px;
     cursor: pointer;
-    margin-top: 20px; /* Add top margin */
+    margin-top: 20px;
 }
 
 .input-with-unit {
@@ -583,11 +582,11 @@ select {
 }
 
 .input-with-unit input[type="text"] {
-    flex: 1; /* Take up remaining space */
+    flex: 1;
 }
 
 .input-with-unit .unit {
-    margin-left: 5px; /* Adjust spacing between input and unit */
+    margin-left: 5px;
 }
 
 .inline-inputs {
@@ -621,8 +620,8 @@ select {
     justify-content: center;
     align-items: center;
     transition: all 0.3s ease;
-    text-decoration: none; /* Remove hyperlink underline */
-    color: black; /* Change text color */
+    text-decoration: none;
+    color: black;
 }
 
 .catalog-card:hover {
@@ -631,15 +630,15 @@ select {
 }
 
 .catalog-card img {
-    width: 200px; /* Adjust image width */
-    height: 200px; /* Maintain aspect ratio */
+    width: 200px;
+    height: 200px;
 }
 
 .catalog-card a {
     margin-top: 10px;
     font-weight: bold;
     text-align: center;
-    color: black; /* Change link text color */
+    color: black;
 }
 
 #add-panel {
@@ -647,7 +646,6 @@ select {
     width: 200px;
 }
 
-/* Add styles for the user container */
 .user-container {
     display: flex;
     align-items: center;
@@ -656,7 +654,7 @@ select {
     gap: 5px;
     padding: 5px;
     border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.2); /* Adjust background color and opacity */
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 #shopping-cart {
@@ -719,7 +717,7 @@ h2 {
 }
 
 .back-button {
-    position: absolute;
+    position: fixed;
     width: 120px;
     height: 50px;
     top: 100px;

@@ -50,7 +50,7 @@ func (o *Order) CalculateOrderPrice() {
 }
 
 func updateProductAmount(productType string, itemID primitive.ObjectID, amountChange int) error {
-	collection, err := defineCollection(productType)
+	collection, err := DefineCollection(productType)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 
 	//Check availability
 	for _, item := range items {
-		collection, err = defineCollection(item.ItemHeader.ProductType)
+		collection, err = DefineCollection(item.ItemHeader.ProductType)
 		if err != nil {
 			return err
 		}
@@ -246,34 +246,4 @@ func SetOrderStatus(orderID primitive.ObjectID, status string) error {
 	}
 	logger.Infof("Set Order #%s STATUS: <%s>", orderID, status)
 	return nil
-}
-
-func defineCollection(productType string) (*mongo.Collection, error) {
-	logger := logging.GetLogger()
-	var collection *mongo.Collection
-
-	switch productType {
-	case "cpu":
-		collection = CpuCollection
-	case "motherboard":
-		collection = MotherboardCollection
-	case "gpu":
-		collection = GpuCollection
-	case "cooling":
-		collection = CoolingCollection
-	case "housing":
-		collection = HousingCollection
-	case "hdd":
-		collection = HddCollection
-	case "ssd":
-		collection = SsdCollection
-	case "ram":
-		collection = RamCollection
-	case "powersupply":
-		collection = PowerSupplyCollection
-	default:
-		logger.Errorf("wrong product type: %s", productType)
-		return nil, fmt.Errorf("wrong product type: %s", productType)
-	}
-	return collection, nil
 }

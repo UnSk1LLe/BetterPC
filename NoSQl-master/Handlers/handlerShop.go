@@ -20,8 +20,6 @@ import (
 	"time"
 )
 
-//TODO make single delete, modify functions
-
 func Shop(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/shop.html"))
 	dataToSend := struct {
@@ -168,37 +166,82 @@ func addCpu(w http.ResponseWriter, r *http.Request) {
 
 func ModifyProductForm(w http.ResponseWriter, r *http.Request) {
 	var tmpl *template.Template
-	switch r.FormValue("productType") {
+	logger := logging.GetLogger()
+	productType := r.FormValue("productType")
+	productID := r.FormValue("productID")
+
+	ObjID, err := primitive.ObjectIDFromHex(productID[10:34])
+	if err != nil {
+		logger.Errorf("invalid productID: %s", productID)
+		HandleError(fmt.Errorf("invalid productID: %s", productID), logger, w)
+		return
+	}
+
+	_, product, err := defineStruct(productType)
+	if err != nil {
+		logger.Errorf("invalid productType: %s", productType)
+		HandleError(fmt.Errorf("invalid productType: %s", productType), logger, w)
+		return
+	}
+
+	switch productType {
 	case "cpu":
 		tmpl = template.Must(template.ParseFiles("html/modifyCpu.html"))
+		var item data.Cpu
+		_, err = getAndDecodeProduct(data.CpuCollection, &item, ObjID)
+		product = item
 	default:
 		_ = showMessage("/shop", "404 Not found!", w)
 		return
 	}
-	err := tmpl.Execute(w, nil)
+	if err != nil {
+		logger.Errorf("Error finding product of type: %s", productType)
+		HandleError(fmt.Errorf("error finding product of type: %s", productType), logger, w)
+		return
+	}
+
+	dataToSend := struct {
+		ProductType string
+		Product     interface{}
+	}{
+		ProductType: productType,
+		Product:     product,
+	}
+
+	err = tmpl.Execute(w, dataToSend)
 	if err != nil {
 		return
 	}
 }
 
 func ModifyProduct(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+
 	productType := r.FormValue("productType")
+	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
+	if err != nil {
+		logger.Errorf("invalid productID: %s", r.FormValue("modifyCpu"))
+		HandleError(fmt.Errorf("invalid productID: %s", r.FormValue("modifyCpu")), logger, w)
+		return
+	}
+
 	switch productType {
 	case "cpu":
-		modifyCpu(w, r)
+		err = modifyCpu(ObjID, r)
 	default:
 		_ = showMessage("/shop", "Internal server error!", w)
 	}
+	if err != nil {
+		logger.Errorf("Error updating product <%s> with ID", productType)
+		HandleError(err, logger, w)
+		return
+	}
+	_ = showMessage("/shop", "Product updated!", w)
 	return
 }
 
-func modifyCpu(w http.ResponseWriter, r *http.Request) {
+func modifyCpu(ID primitive.ObjectID, r *http.Request) error {
 	logger := logging.GetLogger()
-	err := data.Init("shop", "cpu")
-	if err != nil {
-		http.Redirect(w, r, "/shop", http.StatusSeeOther)
-		return
-	}
 
 	if r.Method == http.MethodPost {
 		year, _ := strconv.Atoi(r.FormValue("year"))
@@ -263,11 +306,10 @@ func modifyCpu(w http.ResponseWriter, r *http.Request) {
 			MaxCapacity:  ramMaxCap,
 		}
 
-		ObjID, err := primitive.ObjectIDFromHex(r.FormValue("modifyCpu")[10:34])
-		filter := bson.M{"_id": ObjID}
+		filter := bson.M{"_id": ID}
 
 		recordCpu := data.Cpu{
-			ID:             ObjID,
+			ID:             ID,
 			General:        general,
 			Main:           main,
 			Cores:          cores,
@@ -279,6 +321,7 @@ func modifyCpu(w http.ResponseWriter, r *http.Request) {
 			MaxTemperature: maxTemp,
 		}
 
+		fmt.Printf("CPU %v", recordCpu)
 		update := bson.M{"$set": bson.M{
 			"general":         recordCpu.General,
 			"main":            recordCpu.Main,
@@ -291,22 +334,24 @@ func modifyCpu(w http.ResponseWriter, r *http.Request) {
 			"max_temperature": recordCpu.MaxTemperature,
 		}}
 
-		_, err = data.Collection.UpdateOne(context.TODO(), filter, update)
+		res, err := data.UpdateProduct(data.CpuCollection, filter, update)
+		fmt.Println(res)
 		if err != nil {
-			logger.Infof("A bulk write error occurred: %v", err)
-		} else {
-			logger.Infof("CPU record with ID: %s was UPDATED!", ObjID)
+			logger.Errorf("A bulk write error occurred: %v", err)
+			return err
 		}
-
-		http.Redirect(w, r, "/shop", http.StatusSeeOther)
+	} else {
+		return errors.New("not a post method")
 	}
+	logger.Infof("CPU record with ID: %s was UPDATED!", ID)
+	return nil
 }
 
 func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	productType := r.FormValue("productType")
-	productId := r.FormValue("productId")
-	ObjID, err := primitive.ObjectIDFromHex(productId)
+	productID := r.FormValue("productID")
+	ObjID, err := primitive.ObjectIDFromHex(productID[10:34])
 	if err != nil {
 		logger.Errorf("Error retreving objectID from hex: %v", err)
 		HandleError(fmt.Errorf("error retreving objectID from hex: %v", err), logger, w)
@@ -317,7 +362,7 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		HandleError(err, logger, w)
 	}
 	logger.Infof("Product deleted successfully")
-	message := "Product <" + productType + "> with ID: " + productId + " DELETED successfully!"
+	message := "Product <" + productType + "> with ID: " + productID + " DELETED successfully!"
 	_ = showMessage("/shop", message, w)
 }
 
@@ -331,63 +376,94 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 		return bson.M{}, err
 	}
 
-	var collection mongo.Collection
 	switch productType {
 	case "cpu":
-		collection = *data.CpuCollection
 		if !data.IsZero(build.Motherboard) {
-			filter = bson.M{"main.socket": build.Motherboard.Socket}
+			conditions = append(conditions, bson.M{"main.socket": build.Motherboard.Socket})
 		}
 		if !data.IsZero(build.RAM) {
-			filter = bson.M{"ram.type": build.RAM.Type}
+			conditions = append(conditions, bson.M{"ram.type": build.RAM.Type, "ram.max_frequency": bson.M{"$gte": build.RAM.Frequency},
+				"ram.max_capacity": bson.M{"$gte": build.RAM.Capacity * build.RAM.Number}})
+		}
+		if !data.IsZero(build.Cooling) {
+			conditions = append(conditions, bson.M{"main.socket": bson.M{"$in": build.Cooling.Sockets}, "tdp": bson.M{"$lte": build.Cooling.Tdp}})
 		}
 	case "motherboard":
-		collection = *data.MotherboardCollection
 		if !data.IsZero(build.CPU) {
-			filter = bson.M{"socket": build.CPU.Main.Socket}
+			conditions = append(conditions, bson.M{"socket": build.CPU.Main.Socket})
 		}
 		if !data.IsZero(build.Housing) {
-			filter = bson.M{"form_factor": build.Housing.MbFormFactor}
+			conditions = append(conditions, bson.M{"form_factor": build.Housing.MbFormFactor})
+		}
+		if !data.IsZero(build.RAM) {
+			conditions = append(conditions, bson.M{"ram.type": build.RAM.Type, "ram.max_frequency": bson.M{"$gte": build.RAM.Frequency},
+				"ram.max_capacity": bson.M{"$gte": build.RAM.Capacity * build.RAM.Number}, "ram.slots": bson.M{"$gte": build.RAM.Number}})
 		}
 	case "ram":
-		collection = *data.RamCollection
 		if !data.IsZero(build.Motherboard) {
-			filter = bson.M{"type": build.Motherboard.Ram.Type, "max_frequency": bson.M{"$lte": build.Motherboard.Ram.MaxFrequency}}
+			conditions = append(conditions, bson.M{"type": build.Motherboard.Ram.Type, "frequency": bson.M{"$lte": build.Motherboard.Ram.MaxFrequency}, "form_factor": "DIMM"})
+		}
+		if !data.IsZero(build.CPU) {
+			conditions = append(conditions, bson.M{
+				"type": build.CPU.Ram.Type, "frequency": bson.M{"$lte": build.CPU.Ram.MaxFrequency},
+				"$expr": bson.M{"$lte": bson.A{bson.M{"$multiply": bson.A{"$capacity", "$number"}}, build.CPU.Ram.MaxCapacity}},
+			})
 		}
 	case "gpu":
-		collection = *data.GpuCollection
 		if !data.IsZero(build.PowerSupply) {
-			filter = bson.M{"tdp": bson.M{"$lte": build.PowerSupply.OutputPower}}
+			conditions = append(conditions, bson.M{"tdp_r": bson.M{"$lte": build.PowerSupply.OutputPower}})
+		}
+		if !data.IsZero(build.Housing) {
+			conditions = append(conditions, bson.M{"size.0": bson.M{"$lte": build.Housing.GraphicCardSize}})
 		}
 	case "ssd":
-		collection = *data.SsdCollection
 		if !data.IsZero(build.Motherboard) {
-			if build.Motherboard.Interfaces.M2 > 0 {
-				filter["form_factor"] = bson.M{"$eq": "M2"}
-			}
-			if build.Motherboard.Interfaces.Sata3 > 0 {
-				filter["interface"] = bson.M{"$eq": "SATA3"}
+			if build.Motherboard.Interfaces.M2 > 0 && build.Motherboard.Interfaces.Sata3 > 0 {
+				filter = bson.M{"$or": []bson.M{{"form_factor": bson.M{"$regex": "M.2"}}, {"interface": "SATA 3"}}}
+			} else if build.Motherboard.Interfaces.M2 > 0 {
+				conditions = append(conditions, bson.M{"form_factor": bson.M{"$regex": "M.2"}})
+			} else if build.Motherboard.Interfaces.Sata3 > 0 {
+				conditions = append(conditions, bson.M{"interface": "SATA 3"})
 			}
 		}
 	case "hdd":
-		collection = *data.HddCollection
 		if !data.IsZero(build.Motherboard) {
-			filter = bson.M{"interface": build.Motherboard.Interfaces.Sata3}
+			if build.Motherboard.Interfaces.Sata3 > 0 {
+				filter = bson.M{"interface": "SATA 3"}
+			}
 		}
 	case "cooling":
-		collection = *data.CoolingCollection
 		if !data.IsZero(build.CPU) {
-			conditions = append(conditions, bson.M{"sockets": bson.M{"$in": []string{build.CPU.Main.Socket}}})
+			conditions = append(conditions, bson.M{"sockets": build.CPU.Main.Socket})
+			conditions = append(conditions, bson.M{"tdp": bson.M{"$gte": build.CPU.Tdp}})
+		}
+		if !data.IsZero(build.Motherboard) {
+			conditions = append(conditions, bson.M{"sockets": build.Motherboard.Socket})
+		}
+		if !data.IsZero(build.Housing) {
+			conditions = append(conditions, bson.M{"height": bson.M{"$lte": build.Housing.CoolerHeight}})
 		}
 	case "powersupply":
-		collection = *data.PowerSupplyCollection
 		if !data.IsZero(build.GPU) {
-			filter = bson.M{"output_power": bson.M{"$gte": build.GPU.Tdp}}
+			conditions = append(conditions, bson.M{"output_power": bson.M{"$gte": build.GPU.TdpR}})
+		}
+		if !data.IsZero(build.Housing) {
+			conditions = append(conditions, bson.M{"ps_form_factor": build.Housing.PsFormFactor})
 		}
 	case "housing":
-		collection = *data.HousingCollection
 		if !data.IsZero(build.Motherboard) {
-			filter = bson.M{"mb_form_factor": build.Motherboard.FormFactor}
+			conditions = append(conditions, bson.M{"mb_form_factor": build.Motherboard.FormFactor})
+		}
+		if !data.IsZero(build.PowerSupply) {
+			conditions = append(conditions, bson.M{"ps_form_factor": build.PowerSupply.FormFactor})
+		}
+		if !data.IsZero(build.SSD) {
+			if build.SSD.FormFactor == "2.5" {
+				conditions = append(conditions, bson.M{"drive_bays.2_5": bson.M{"$gte": 0}})
+			}
+		}
+		if !data.IsZero(build.HDD) {
+			conditions = append(conditions, bson.M{"drive_bays.3_5": bson.M{"$gte": 0}})
 		}
 	default:
 		logger.Errorf("Unknown product type: %s", productType)
@@ -397,7 +473,7 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 		filter["$and"] = conditions
 	}
 
-	fmt.Println(build, collection)
+	fmt.Println(filter)
 	return filter, nil
 }
 
@@ -603,14 +679,13 @@ func getFullBuild(r *http.Request) (*data.FullBuild, error) {
 func productsListing(productType string, filter bson.M, w http.ResponseWriter) ([]data.Product, error) {
 	logger := logging.GetLogger()
 
-	dbName := "shop"
-	collectionName, _, err := defineStruct(productType)
+	collection, _, err := defineStruct(productType)
 	if err != nil {
 		return nil, err
 	}
 	var productsList []data.Product
 
-	cur, err := data.GetProducts(dbName, collectionName, filter)
+	cur, err := data.GetProducts(collection, filter)
 	if err != nil {
 		logger.Errorf("Error when trying to get products: %v", err)
 		return nil, err
@@ -727,25 +802,18 @@ func decodeProduct(cur *mongo.Cursor, item interface{}) error {
 func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	productType := r.FormValue("productType")
-	dbName := "shop"
 
-	collectionName, item, err := defineStruct(productType)
+	collection, item, err := defineStruct(productType)
 	if err != nil {
 		HandleError(err, logger, w)
 		return
 	}
 
-	err = data.Init(dbName, collectionName)
-	if err != nil {
-		HandleError(err, logger, w)
-	}
-	defer data.CloseConnection()
-
 	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
 
 	tmpl := template.Must(template.ParseFiles("html/productInformation.html"))
 
-	item, err = getAndDecodeProduct(data.Collection, item, ObjID)
+	item, err = getAndDecodeProduct(collection, item, ObjID)
 
 	dataToSend := struct {
 		ProductType string
@@ -875,10 +943,9 @@ func saveBuildToCookie(w http.ResponseWriter, r *http.Request, build []data.Prod
 
 func AddToBuild(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	dbName := "shop"
 	productType := r.FormValue("productType")
 
-	collectionName, product, err := defineStruct(productType)
+	_, product, err := defineStruct(productType)
 	if err != nil {
 		HandleError(err, logger, w)
 		return
@@ -891,7 +958,8 @@ func AddToBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := data.GetProductById(dbName, collectionName, ObjID)
+	collection, err := data.DefineCollection(productType)
+	result, err := data.GetProductById(collection, ObjID)
 	if err != nil {
 		logger.Errorf("Error getting product: %s", r.FormValue("productID"))
 		HandleError(err, logger, w)

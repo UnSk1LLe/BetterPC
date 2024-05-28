@@ -87,25 +87,22 @@ function listCompatible(productType) {
 }
 
 function expandComponent(componentType, componentContainer) {
-    // Hide all existing detail forms
     const allDetailForms = document.querySelectorAll('.component-detail-form');
     allDetailForms.forEach(form => {
         form.style.display = 'none';
     });
 
-    // Show the detail form for the specified component
     const detailFormId = `${componentType}-detail-form`;
     const detailForm = document.getElementById(detailFormId);
     if (detailForm) {
         detailForm.style.display = 'block';
     }
 
-    // Stop event propagation to prevent the document click event from immediately hiding the form
+
     detailForm.addEventListener('click', function (event) {
         event.stopPropagation();
     });
 
-    // Position the detail form absolutely below the component container
     const rect = componentContainer.getBoundingClientRect();
     detailForm.style.position = 'absolute';
     detailForm.style.top = `${rect.bottom + window.scrollY}px`;
@@ -225,12 +222,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const toggleDisplay = document.getElementById('toggleDisplay');
     const build = document.getElementById('build');
+    const orderBuild = document.getElementById('createOrderFromBuildButton')
 
     toggleDisplay.addEventListener('change', function() {
         if (this.checked) {
             build.style.display = 'flex';
+            orderBuild.style.display = 'block'
         } else {
             build.style.display = 'none';
+            orderBuild.style.display = 'none'
         }
     });
 });

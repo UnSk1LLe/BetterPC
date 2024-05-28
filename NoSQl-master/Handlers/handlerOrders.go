@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -17,10 +18,9 @@ import (
 
 func AddToCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	dbName := "shop"
 	productType := r.FormValue("productType")
 
-	collectionName, product, err := defineStruct(productType)
+	collection, product, err := defineStruct(productType)
 	if err != nil {
 		HandleError(err, logger, w)
 		return
@@ -33,7 +33,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := data.GetProductById(dbName, collectionName, ObjID)
+	result, err := data.GetProductById(collection, ObjID)
 	if err != nil {
 		logger.Errorf("Error getting product: %s", r.FormValue("productID"))
 		HandleError(err, logger, w)
@@ -152,7 +152,6 @@ func getCartFromCookie(r *http.Request) ([]data.ItemHeader, error) {
 		logger.Errorf("Error unmarshalling cart cookie: %v", err)
 		logger.Errorf("Cart Cookie Value (Raw): %v", decodedValue)
 
-		// If the cookie is not a valid JSON, reset it
 		return []data.ItemHeader{}, nil
 	}
 
@@ -175,7 +174,7 @@ func saveCartToCookie(w http.ResponseWriter, r *http.Request, cart []data.ItemHe
 		Name:    "cart" + userID,
 		Value:   encodedValue,
 		Expires: time.Now().Add(24 * time.Hour),
-		Path:    "/", // Accessible everywhere
+		Path:    "/", //Accessible everywhere
 	})
 
 	logger.Infof("Cookie with name: %s was saved.", userID)
@@ -235,15 +234,13 @@ func getItemsFromItemHeaders(userCartHeaders []data.ItemHeader, dbName string, w
 	logger := logging.GetLogger()
 	var userCart []data.Item
 
-	//Fetch full product details for each ItemHeader
 	for _, header := range userCartHeaders {
-		collectionName, product, err := defineStruct(header.ProductType)
+		collection, product, err := defineStruct(header.ProductType)
 		if err != nil {
 			HandleError(err, logger, w)
 		}
 
-		//Fetch product details from the database
-		result, err := data.GetProductById(dbName, collectionName, header.ID)
+		result, err := data.GetProductById(collection, header.ID)
 		if err != nil {
 			logger.Errorf("Error fetching product details: %v", err)
 			http.Error(w, "Error fetching product details", http.StatusInternalServerError)
@@ -262,46 +259,46 @@ func getItemsFromItemHeaders(userCartHeaders []data.ItemHeader, dbName string, w
 	return userCart, nil
 }
 
-func defineStruct(productType string) (string, interface{}, error) {
+func defineStruct(productType string) (*mongo.Collection, interface{}, error) {
 	logger := logging.GetLogger()
-	var collectionName string
+	var collection *mongo.Collection
 	var err error
 	var product interface{}
 
 	switch productType {
 	case "cpu":
-		collectionName = "cpu"
+		collection = data.CpuCollection
 		product = &data.Cpu{}
 	case "motherboard":
-		collectionName = "motherboard"
+		collection = data.MotherboardCollection
 		product = &data.Motherboard{}
 	case "gpu":
-		collectionName = "gpu"
+		collection = data.GpuCollection
 		product = &data.Gpu{}
 	case "cooling":
-		collectionName = "cooling"
+		collection = data.CoolingCollection
 		product = &data.Cooling{}
 	case "housing":
-		collectionName = "housing"
+		collection = data.HousingCollection
 		product = &data.Housing{}
 	case "hdd":
-		collectionName = "hdd"
+		collection = data.HddCollection
 		product = &data.Hdd{}
 	case "ssd":
-		collectionName = "ssd"
+		collection = data.SsdCollection
 		product = &data.Ssd{}
 	case "ram":
-		collectionName = "ram"
+		collection = data.RamCollection
 		product = &data.Ram{}
 	case "powersupply":
-		collectionName = "powersupply"
+		collection = data.PowerSupplyCollection
 		product = &data.PowerSupply{}
 	default:
 		logger.Errorf("Error: wrong product type <%s>!", productType)
 		err = errors.New("wrong product type: " + productType)
-		return "", nil, err
+		return nil, nil, err
 	}
-	return collectionName, product, nil
+	return collection, product, nil
 }
 
 func UpdateCart(w http.ResponseWriter, r *http.Request) {
@@ -384,17 +381,24 @@ func ClearUserCart(w http.ResponseWriter, r *http.Request) {
 	userID := data.ShowUser(r).ID.Hex()
 
 	cartCookie, err := r.Cookie("cart" + userID)
+	cartCookie.MaxAge = -1
 	if err != nil {
 		return
 	}
 
-	clearCookie := http.Cookie{
-		Name:   userID,
-		Path:   cartCookie.Path,
-		MaxAge: -1,
+	http.SetCookie(w, cartCookie)
+}
+
+func ClearUserBuild(w http.ResponseWriter, r *http.Request) {
+	userID := data.ShowUser(r).ID.Hex()
+
+	cartCookie, err := r.Cookie("build" + userID)
+	cartCookie.MaxAge = -1
+	if err != nil {
+		return
 	}
 
-	http.SetCookie(w, &clearCookie)
+	http.SetCookie(w, cartCookie)
 }
 
 func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
@@ -421,6 +425,51 @@ func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ClearUserCart(w, r)
+	_ = showMessage("/shop", "Order has been created successfully! You can check it in your profile.", w)
+	return
+}
+
+func ConvertToItemHeaders(productHeaders []data.ProductHeader) []data.ItemHeader {
+	var itemHeaders []data.ItemHeader
+
+	for _, productHeader := range productHeaders {
+		itemHeader := data.ItemHeader{
+			ID:          productHeader.ID,
+			ProductType: productHeader.ProductType,
+			Amount:      1,
+		}
+		itemHeaders = append(itemHeaders, itemHeader)
+	}
+
+	return itemHeaders
+}
+
+func CreateOrderFromBuild(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	productHeaders, err := getBuildFromCookie(r)
+	if err != nil {
+		logger.Errorf("Error getting build from cookie: %v", err)
+		HandleError(errors.New("error getting build from cookie"), logger, w)
+		return
+	}
+
+	itemHeaders := ConvertToItemHeaders(productHeaders)
+
+	userBuild, err := getItemsFromItemHeaders(itemHeaders, "shop", w)
+	if err != nil {
+		logger.Errorf("Error getting items from itemHeaders: %v", err)
+		HandleError(errors.New("error getting items from itemHeaders"), logger, w)
+		return
+	}
+
+	err = data.CreateOrder(userBuild, data.ShowUser(r).ID)
+	if err != nil {
+		logger.Errorf("Error creating order from build: %v", err)
+		HandleError(errors.New("error creating order from build"), logger, w)
+		return
+	}
+
+	ClearUserBuild(w, r)
 	_ = showMessage("/shop", "Order has been created successfully! You can check it in your profile.", w)
 	return
 }

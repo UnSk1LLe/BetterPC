@@ -58,24 +58,29 @@ function confirmDelete(productId) {
 }
 
 function checkOrderButton() {
-    var createOrderButton = document.getElementById('createOrderButton');
-    var allQuantitiesValid = true;
-    var quantityElements = document.querySelectorAll('.cpu-card');
+    let createOrderButton = document.getElementById('createOrderButton');
+    let allQuantitiesValid = true;
+    let quantityElements = document.querySelectorAll('.product-card');
 
     quantityElements.forEach(function(cardElement) {
-        var index = cardElement.getAttribute('data-index');
-        var quantity = parseInt(document.getElementById('quantity' + index).textContent);
-        var maxAmount = parseInt(cardElement.getAttribute('data-max-amount'));
+        let index = cardElement.getAttribute('data-index');
+        let quantity = parseInt(document.getElementById('quantity' + index).textContent);
+        let maxAmount = parseInt(cardElement.getAttribute('data-max-amount'));
         if (quantity > maxAmount) {
             allQuantitiesValid = false;
         }
     });
 
-    if (allQuantitiesValid && quantityElements) {
+    if (quantityElements.length === 0) {
+        createOrderButton.disabled = true
+        document.getElementById('no-products').style.display = 'block';
+    } else if (allQuantitiesValid && quantityElements) {
         createOrderButton.disabled = false;
     } else {
         createOrderButton.disabled = true;
     }
+
+
 }
 
 window.onload = function() {

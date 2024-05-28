@@ -35,7 +35,7 @@
       "min": 0,
       "max": 10000000
     },
-    "Manufacturer": ["Asrock", "ASUS", "Gigabyte", "MSI"],
+    "Manufacturer": ["ASRock", "ASUS", "Gigabyte", "MSI"],
     "Socket": ["AM5", "AM4", "LGA 1700", "LGA 1200", "LGA 1151-v2", "LGA 1151"],
     "Intel chipset groups": ["Z", "B", "H", "Q"],
     "AMD chipset groups": ["X", "B", "A"],
@@ -43,16 +43,14 @@
     "Ram type": ["DDR3", "DDR4", "DDR5"],
     "Ram slots": [2, 4, 8],
     "M2 interfaces": [0, 1, 2, 3, 4, 5],
-    "P-Cores": [2, 4, 6, 8, 10, 12, 16, 18, 24, 32, 64],
-    "For CPU": ["Intel", "AMD"],
-    "PCI-E": ["3.0", "4.0", "5.0"]
+    "For CPU": ["Intel", "AMD"]
   },
   "powersupplyFilters": {
     "Price": {
       "min": 0,
       "max": 10000000
     },
-    "Manufacturer": ["Chieftec", "Asrock", "ASUS", "ColorFul", "Deepcool", "GIGABYTE", "AeroCool", "ZALMAN", "Cougar", "be quiet!", "Gamemax"],
+    "Manufacturer": ["Chieftec", "ASRock", "ASUS", "ColorFul", "Deepcool", "GIGABYTE", "AeroCool", "ZALMAN", "Cougar", "be quiet!", "Gamemax"],
     "Output power": {
       "min": 0,
       "max": 10000

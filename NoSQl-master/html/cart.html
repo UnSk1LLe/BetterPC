@@ -58,6 +58,7 @@
     <div id="results">
         <h2>Cart Items</h2>
         <div id="cart-list">
+            <div id="no-products" style="text-align: center; display: none">There are no products in cart</div>
                 {{ range $index, $item := .UserCart }}
                 <div class="product-card" data-index="{{ $index }}" data-max-amount="{{ $item.MaxAmount }}" data-price="{{ $item.Price }}">
                     <div class="product-image">
@@ -77,7 +78,7 @@
                             </p>
                         </div>
                         <div class="product-actions">
-                            <button class="buy-button" name="showProduct" type="button" onclick="showProduct('{{$item.ItemHeader.ProductType}}', '{{ $item.ItemHeader.ID }}')">Full</button>
+                            <button class="buy-button" name="showProduct" type="button" onclick="showProduct('{{$item.ItemHeader.ProductType}}', '{{ $item.ItemHeader.ID }}')">Show</button>
                             <button class="compare-button" type="button" onclick="confirmDelete('{{ $item.ItemHeader.ID }}')">Delete</button>
                         </div>
                     </div>

@@ -3,6 +3,7 @@ package data
 import (
 	"MongoDb/pkg/logging"
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
@@ -119,6 +120,36 @@ func InitAll() {
 	if err != nil {
 		logger.Fatalf("Error trying to connect to DB: %v, collection: powersupply", shopDb)
 	}
+}
+
+func DefineCollection(productType string) (*mongo.Collection, error) {
+	logger := logging.GetLogger()
+	var collection *mongo.Collection
+
+	switch productType {
+	case "cpu":
+		collection = CpuCollection
+	case "motherboard":
+		collection = MotherboardCollection
+	case "gpu":
+		collection = GpuCollection
+	case "cooling":
+		collection = CoolingCollection
+	case "housing":
+		collection = HousingCollection
+	case "hdd":
+		collection = HddCollection
+	case "ssd":
+		collection = SsdCollection
+	case "ram":
+		collection = RamCollection
+	case "powersupply":
+		collection = PowerSupplyCollection
+	default:
+		logger.Errorf("wrong product type: %s", productType)
+		return nil, fmt.Errorf("wrong product type: %s", productType)
+	}
+	return collection, nil
 }
 
 func CloseConnection() {
