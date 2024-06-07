@@ -433,6 +433,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func showMessage(action string, message string, w http.ResponseWriter) error {
+
 	tmpl := template.Must(template.ParseFiles("html/message.html"))
 	err := tmpl.Execute(w, map[string]interface{}{
 		"Action":  action,

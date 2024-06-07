@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 	"reflect"
 	"strconv"
@@ -92,10 +93,9 @@ type ClockFrequencyCpu struct {
 }
 
 type RamCpu struct {
-	Channels     int    `bson:"channels"`
-	Type         string `bson:"type"`
-	MaxFrequency int    `bson:"max_frequency"`
-	MaxCapacity  int    `bson:"max_capacity"`
+	Channels     int   `bson:"channels"`
+	MaxFrequency []int `bson:"max_frequency"`
+	MaxCapacity  int   `bson:"max_capacity"`
 }
 
 type Motherboard struct {
@@ -409,9 +409,17 @@ func IsZero(v interface{}) bool {
 	return reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface())
 }
 
-func GetProducts(collection *mongo.Collection, filter bson.M) (*mongo.Cursor, error) {
+func GetProducts(collection *mongo.Collection, filter bson.M, skip int, limit int) (*mongo.Cursor, error) {
+	//if skip or limit not needed then set to 0
 	logger := logging.GetLogger()
-	cur, err := collection.Find(context.TODO(), filter)
+	findOptions := options.Find()
+	if skip > 0 {
+		findOptions.SetSkip(int64(skip))
+	}
+	if limit > 0 {
+		findOptions.SetLimit(int64(limit))
+	}
+	cur, err := collection.Find(context.TODO(), filter, findOptions)
 	if err != nil {
 		logger.Errorf("Error getting products from <%s> collection: %v", collection.Name(), err)
 		return nil, err

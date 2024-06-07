@@ -29,12 +29,41 @@
         addedText.style.display = 'none';
     }
 });*/
+const urlParams = new URLSearchParams(window.location.search);
+let listCompatibleOnly = urlParams.get('listCompatibleOnly');
+let search = urlParams.get('search')
+listCompatibleOnly = listCompatibleOnly === 'true';
+
+function listProducts(productType, pageNumber, searchQuery) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('productType', productType);
+    urlParams.set('listCompatibleOnly', listCompatibleOnly);
+    urlParams.set('pageNumber', pageNumber);
+    if (searchQuery) {
+        urlParams.set('search', searchQuery);
+    } else {
+        urlParams.delete('search');
+    }
+    window.location.href = `/listProducts?${urlParams.toString()}`;
+}
 
 function filterProducts(productType) {
     const form = document.getElementById('filters-form');
     form.action = `/listProducts?productType=${encodeURIComponent(productType)}`;
     form.submit();
 }
+
+function performSearch() {
+    const searchInput = document.getElementById('search-input').value;
+    let productType = urlParams.get('productType');
+    listProducts(productType, 1, searchInput);
+}
+
+document.getElementById('search-input').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        performSearch();
+    }
+})
 
 function modifyProductForm(productType, productID) {
     window.location.href = `/modifyProductForm?productType=${encodeURIComponent(productType)}&productID=${encodeURIComponent(productID)}`
@@ -76,14 +105,10 @@ function handleClick(componentType) {
     const isEmpty = componentContainer.querySelector('.empty-component');
 
     if (isEmpty) {
-        listCompatible(componentType);
+        listProducts(componentType);
     } else {
         expandComponent(componentType, componentContainer);
     }
-}
-
-function listCompatible(productType) {
-    window.location.href = `/listProducts?productType=${encodeURIComponent(productType)}&listCompatibleOnly=${true}`
 }
 
 function expandComponent(componentType, componentContainer) {
@@ -112,7 +137,7 @@ function expandComponent(componentType, componentContainer) {
 }
 
 function replaceComponent(productType) {
-    window.location.href = `/listProducts?productType=${encodeURIComponent(productType)}&listCompatibleOnly=${true}`
+    window.location.href = `/listProducts?productType=${encodeURIComponent(productType)}&listCompatibleOnly=${listCompatibleOnly}`
 }
 
 function deleteComponent(productType) {
@@ -228,9 +253,27 @@ document.addEventListener("DOMContentLoaded", function() {
         if (this.checked) {
             build.style.display = 'flex';
             orderBuild.style.display = 'block'
+            listCompatibleOnly = true
+            listProducts(productType, 1, search)
         } else {
             build.style.display = 'none';
             orderBuild.style.display = 'none'
+            listCompatibleOnly = false
+            listProducts(productType, 1, search)
         }
     });
+});
+
+function formatPrice(price) {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+document.querySelectorAll('.old-price').forEach(function(element) {
+    let oldPrice = parseInt(element.innerText);
+    element.innerText = formatPrice(oldPrice) + " ₸";
+});
+
+document.querySelectorAll('.discount-price').forEach(function(element) {
+    let discountPrice = parseInt(element.innerText);
+    element.innerText = formatPrice(discountPrice) + " ₸";
 });

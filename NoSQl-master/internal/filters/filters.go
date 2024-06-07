@@ -5,6 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func appendIntFilterParameters(parameterValues []string, result *[]int) {
@@ -80,6 +81,24 @@ func getIntervalFilter(key string, r *http.Request) bson.M {
 	return filter
 }
 
+func SearchProducts(searchQuery string) bson.M {
+	if searchQuery != "" {
+		searchWords := strings.Split(searchQuery, " ")
+		searchFilters := make([]bson.M, len(searchWords))
+		for i, word := range searchWords {
+			searchFilters[i] = bson.M{
+				"$or": []bson.M{
+					{"general.model": bson.M{"$regex": word, "$options": "i"}},
+					{"general.manufacturer": bson.M{"$regex": word, "$options": "i"}},
+					{"main.category": bson.M{"$regex": word, "$options": "i"}},
+				},
+			}
+		}
+		return bson.M{"$and": searchFilters}
+	}
+	return bson.M{}
+}
+
 func FilterCpu(r *http.Request) bson.M {
 	logger := logging.GetLogger()
 
@@ -147,7 +166,14 @@ func FilterCpu(r *http.Request) bson.M {
 	}
 
 	if len(ramTypes) > 0 {
-		filter["ram.type"] = bson.M{"$in": ramTypes}
+		for _, t := range ramTypes {
+			if t == "DDR4" {
+				filter["ram.max_frequency.0"] = bson.M{"$gt": 0}
+			}
+			if t == "DDR5" {
+				filter["ram.max_frequency.1"] = bson.M{"$gt": 0}
+			}
+		}
 	}
 
 	if len(sockets) > 0 {

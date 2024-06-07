@@ -346,7 +346,7 @@ input:checked + .slider:before {
 
 .product-details {
     flex: 1;
-    position: relative; /* Required for absolute positioning */
+    position: relative;
 }
 
 .product-info p {
@@ -362,6 +362,44 @@ input:checked + .slider:before {
 .product-actions button {
     margin-left: 10px;
 }
+
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.pagination-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: inline-block;
+}
+
+.pagination-item {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.pagination-item a {
+    color: #333;
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.pagination-item a:hover {
+    background-color: #f0f0f0;
+}
+
+.pagination-item.active span {
+    color: #fff;
+    background-color: #337ab7;
+    padding: 5px 10px;
+    border: 1px solid #337ab7;
+    border-radius: 5px;
+}
+
 
 .quantity {
     display: flex;
@@ -472,6 +510,22 @@ tbody tr:nth-child(even) {
     position: absolute;
     top: 10px;
     right: 10px;
+    font-weight: bold;
+}
+
+.old-price {
+    color: red;
+    text-decoration: line-through;
+    font-size: 14px;
+    margin-right: 0;
+}
+
+.discount-percentage {
+    color: green;
+    margin-right: 10px;
+}
+
+.discount-price {
     font-weight: bold;
 }
 

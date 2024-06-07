@@ -14,7 +14,7 @@
                 <li class="dropdown">
                     <a href="/shop" class="dropbtn catalog-button">Catalog</a>
                     <div class="dropdown-content">
-                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=cpu&pageNumber=1">CPU</a>
                         <a href="/listProducts?productType=gpu">GPU</a>
                         <a href="/listProducts?productType=motherboard">Motherboards</a>
                         <a href="/listProducts?productType=ram">RAM</a>
@@ -28,8 +28,8 @@
             </ul>
         </div>
         <div id="search-bar">
-            <input type="text" id="search-input" placeholder="Search...">
-            <button id="search-button">
+            <input type="text" id="search-input" placeholder="Search..." {{if .SearchQuery }} value="{{.SearchQuery}}" {{end}}>
+            <button id="search-button" onclick="performSearch()">
                 <img src="./assets/icons/search.png" alt="Search">
             </button>
         </div>
@@ -222,6 +222,7 @@
         </div>
         <h2>Results</h2>
         <div id="product-list">
+            {{ if .ProductsList }}
             {{ range $index, $item := .ProductsList }}
             <div class="product-card">
                 <div class="product-image">
@@ -246,14 +247,50 @@
                         <div id="addedText{{$index}}" style="display: none;">Added</div>
                     </div>
 
-                    <p class="price">{{ $item.General.Price }} ₸</p>
+                    {{ if ne $item.General.Discount 0 }}
+                    <p class="price">
+                        <span class="old-price">{{ $item.General.Price }} ₸</span>
+                        <span class="discount-percentage">-{{ $item.General.Discount }}%</span>
+                        <span class="discount-price">{{ calculateDiscountPrice $item.General.Price $item.General.Discount }} ₸</span>
+                    </p>
+                    {{ else }}
+                    <p class="price">
+                        <span class="discount-price">{{ $item.General.Price }} ₸</span>
+                    </p>
+                    {{ end }}
                 </div>
             </div>
+            {{ end }}
+            {{ else }}
+            <h3>No products found</h3>
             {{ end }}
         </div>
         <form action="/addNewProductChoice" method="post">
             <button class="submit-button" name="cpuForm" type="submit">Add Product</button>
         </form>
+        <div class="pagination">
+            <ul class="pagination-list">
+                {{ if gt .TotalPages 1 }}
+                {{ if ne .CurrentPage 1 }}
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', 1, '{{.SearchQuery}}')">&laquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}','{{ sub .CurrentPage 1 }}', '{{.SearchQuery}}')">&lsaquo;</a></li>
+                {{ end }}
+
+                {{ range $page := until 1 .TotalPages }}
+                {{ if eq $page $.CurrentPage }}
+                <li class="pagination-item active"><span>{{ $page }}</span></li>
+                {{ else }}
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ $.ProductType }}', '{{ $page }}', '{{$.SearchQuery}}')">{{ $page }}</a></li>
+                {{ end }}
+                {{ end }}
+
+                {{ if ne .CurrentPage .TotalPages }}
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ add .CurrentPage 1 }}', '{{.SearchQuery}}')">&rsaquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ .TotalPages }}', '{{.SearchQuery}}')">&raquo;</a></li>
+                {{ end }}
+                {{ end }}
+            </ul>
+        </div>
     </div>
     <div class="component-detail-form" id="cpu-detail-form">
         <div class="detail-info">

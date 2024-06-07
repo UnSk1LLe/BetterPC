@@ -100,16 +100,24 @@
             </div>
             <div class="form-group">
                 <label for="type">Type:</label>
-                <select id="type" name="type" required>
-                    <option value="ddr4">DDR4</option>
-                    <option value="ddr5">DDR5</option>
-                </select>
+                <div id="type">
+                    <input type="checkbox" id="ddr4" name="type" value="DDR4">
+                    <label for="ddr4" style="display: inline-block">DDR4</label>
+                    <input type="checkbox" id="ddr5" name="type" value="DDR5">
+                    <label for="ddr5" style="display: inline-block">DDR5</label>
+                </div>
             </div>
             <div class="form-group">
-                <label for="maxFr">Max Frequency:</label>
-                <div class="input-with-unit">
-                    <input type="number" id="maxFr" name="maxFr" min="0" required>
-                    <span class="unit">MHz</span>
+                <label>Max Frequency:</label>
+                <div class="inline-inputs">
+                    <div class="input-with-unit">
+                        <input type="number" id="ddr4MaxFr" name="ddr4MaxFr" min="0" required disabled>
+                        <span class="unit">DDR4 MHz</span>
+                    </div>
+                    <div class="input-with-unit">
+                        <input type="number" id="ddr5MaxFr" name="ddr5MaxFr" min="0" required disabled>
+                        <span class="unit">DDR5 MHz</span>
+                    </div>
                 </div>
             </div>
             <div class="form-group">
@@ -171,20 +179,6 @@
         </form>
     </div>
 </main>
-<script>
-    const ecores = document.getElementById('ecores');
-    const ecoresBase = document.getElementById('ecoresBase');
-    const ecoresBoost = document.getElementById('ecoresBoost');
-
-    ecores.addEventListener('input', function() {
-        if (ecores.value > 0) {
-            ecoresBase.disabled = false;
-            ecoresBoost.disabled = false;
-        } else {
-            ecoresBase.disabled = true;
-            ecoresBoost.disabled = true;
-        }
-    });
-</script>
+<script src="./assets/js/modifyCpu.js"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ import (
 	"MongoDb/internal/filters"
 	"MongoDb/pkg/logging"
 	"MongoDb/pkg/session"
+	"MongoDb/pkg/templateFunctions"
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"html/template"
+	"math"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -79,6 +81,25 @@ func addCpu(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
 	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		ddr4MaxFr := 0
+		ddr5MaxFr := 0
+
+		types := r.Form["type"]
+
+		for _, t := range types {
+			if t == "DDR4" {
+				ddr4MaxFr, _ = strconv.Atoi(r.FormValue("ddr4MaxFr"))
+			}
+			if t == "DDR5" {
+				ddr5MaxFr, _ = strconv.Atoi(r.FormValue("ddr5MaxFr"))
+			}
+		}
+
 		year, _ := strconv.Atoi(r.FormValue("year"))
 		pcores, _ := strconv.Atoi(r.FormValue("pcores"))
 		ecores, _ := strconv.Atoi(r.FormValue("ecores"))
@@ -93,7 +114,6 @@ func addCpu(w http.ResponseWriter, r *http.Request) {
 			ecoresBoost = 0
 		}
 		channels, _ := strconv.Atoi(r.FormValue("channels"))
-		ramMaxFr, _ := strconv.Atoi(r.FormValue("maxFr"))
 		ramMaxCap, _ := strconv.Atoi(r.FormValue("maxCap"))
 		tdp, _ := strconv.Atoi(r.FormValue("tdp"))
 		pcie, _ := strconv.Atoi(r.FormValue("pcie"))
@@ -136,8 +156,7 @@ func addCpu(w http.ResponseWriter, r *http.Request) {
 
 		ram := data.RamCpu{
 			Channels:     channels,
-			Type:         r.FormValue("type"),
-			MaxFrequency: ramMaxFr,
+			MaxFrequency: []int{ddr4MaxFr, ddr5MaxFr},
 			MaxCapacity:  ramMaxCap,
 		}
 
@@ -160,7 +179,6 @@ func addCpu(w http.ResponseWriter, r *http.Request) {
 		} else {
 			logger.Infof("CPU record with ID: %s was CREATED!", recordCpu.ID)
 		}
-		http.Redirect(w, r, "/shop", http.StatusSeeOther)
 	}
 }
 
@@ -244,6 +262,24 @@ func modifyCpu(ID primitive.ObjectID, r *http.Request) error {
 	logger := logging.GetLogger()
 
 	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			return err
+		}
+
+		ddr4MaxFr := 0
+		ddr5MaxFr := 0
+
+		types := r.Form["type"]
+
+		for _, t := range types {
+			if t == "DDR4" {
+				ddr4MaxFr, _ = strconv.Atoi(r.FormValue("ddr4MaxFr"))
+			}
+			if t == "DDR5" {
+				ddr5MaxFr, _ = strconv.Atoi(r.FormValue("ddr5MaxFr"))
+			}
+		}
+
 		year, _ := strconv.Atoi(r.FormValue("year"))
 		pcores, _ := strconv.Atoi(r.FormValue("pcores"))
 		ecores, _ := strconv.Atoi(r.FormValue("ecores"))
@@ -258,7 +294,6 @@ func modifyCpu(ID primitive.ObjectID, r *http.Request) error {
 			ecoresBoost = 0
 		}
 		channels, _ := strconv.Atoi(r.FormValue("channels"))
-		ramMaxFr, _ := strconv.Atoi(r.FormValue("maxFr"))
 		ramMaxCap, _ := strconv.Atoi(r.FormValue("maxCap"))
 		tdp, _ := strconv.Atoi(r.FormValue("tdp"))
 		pcie, _ := strconv.Atoi(r.FormValue("pcie"))
@@ -301,8 +336,7 @@ func modifyCpu(ID primitive.ObjectID, r *http.Request) error {
 
 		ram := data.RamCpu{
 			Channels:     channels,
-			Type:         r.FormValue("type"),
-			MaxFrequency: ramMaxFr,
+			MaxFrequency: []int{ddr4MaxFr, ddr5MaxFr},
 			MaxCapacity:  ramMaxCap,
 		}
 
@@ -382,8 +416,12 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 			conditions = append(conditions, bson.M{"main.socket": build.Motherboard.Socket})
 		}
 		if !data.IsZero(build.RAM) {
-			conditions = append(conditions, bson.M{"ram.type": build.RAM.Type, "ram.max_frequency": bson.M{"$gte": build.RAM.Frequency},
-				"ram.max_capacity": bson.M{"$gte": build.RAM.Capacity * build.RAM.Number}})
+			if build.RAM.Type == "DDR4" {
+				conditions = append(conditions, bson.M{"ram.max_frequency.0": bson.M{"$gte": build.RAM.Frequency}})
+			} else if build.RAM.Type == "DDR5" {
+				conditions = append(conditions, bson.M{"ram.max_frequency.1": bson.M{"$gte": build.RAM.Frequency}})
+			}
+			conditions = append(conditions, bson.M{"ram.max_capacity": bson.M{"$gte": build.RAM.Capacity * build.RAM.Number}})
 		}
 		if !data.IsZero(build.Cooling) {
 			conditions = append(conditions, bson.M{"main.socket": bson.M{"$in": build.Cooling.Sockets}, "tdp": bson.M{"$lte": build.Cooling.Tdp}})
@@ -404,10 +442,13 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 			conditions = append(conditions, bson.M{"type": build.Motherboard.Ram.Type, "frequency": bson.M{"$lte": build.Motherboard.Ram.MaxFrequency}, "form_factor": "DIMM"})
 		}
 		if !data.IsZero(build.CPU) {
-			conditions = append(conditions, bson.M{
-				"type": build.CPU.Ram.Type, "frequency": bson.M{"$lte": build.CPU.Ram.MaxFrequency},
-				"$expr": bson.M{"$lte": bson.A{bson.M{"$multiply": bson.A{"$capacity", "$number"}}, build.CPU.Ram.MaxCapacity}},
-			})
+			if build.CPU.Ram.MaxFrequency[0] != 0 {
+				conditions = append(conditions, bson.M{"frequency": bson.M{"$lte": build.CPU.Ram.MaxFrequency[0]}})
+			}
+			if build.CPU.Ram.MaxFrequency[1] != 0 {
+				conditions = append(conditions, bson.M{"frequency": bson.M{"$lte": build.CPU.Ram.MaxFrequency[1]}})
+			}
+			conditions = append(conditions, bson.M{"$expr": bson.M{"$lte": bson.A{bson.M{"$multiply": bson.A{"$capacity", "$number"}}, build.CPU.Ram.MaxCapacity}}})
 		}
 	case "gpu":
 		if !data.IsZero(build.PowerSupply) {
@@ -481,34 +522,63 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	productType := r.URL.Query().Get("productType")
 	listCompatibleOnly := r.URL.Query().Get("listCompatibleOnly")
+	searchQuery := r.URL.Query().Get("search")
+	fmt.Println(1, searchQuery)
 	var buildFilter bson.M
-	var compatibilityError error
+	var err error
+	search := false
 	pcBuilder := false
 
 	if listCompatibleOnly == "true" {
 		pcBuilder = true
-		buildFilter, compatibilityError = getCompatibilityFilter(productType, r)
-		if compatibilityError != nil {
+		buildFilter, err = getCompatibilityFilter(productType, r)
+		if err != nil {
 			buildFilter = bson.M{}
 		}
 	} else {
 		buildFilter = bson.M{}
 	}
 
+	pageNumber, err := strconv.Atoi(r.FormValue("pageNumber"))
+	if err != nil {
+		pageNumber = 1
+		logger.Infof("Failed to parse page number: %s, so it set to 1", err)
+	}
+
 	var productsList []data.Product
-	tmpl := template.Must(template.ParseFiles("html/listProducts.html"))
+
+	tmpl := template.New("listProducts.html").Funcs(templateFunctions.TmplFuncs)
+	tmpl, err = tmpl.ParseFiles("html/listProducts.html")
+	if err != nil {
+		logger.Errorf("Failed to parse template: %s", err)
+		return
+	}
+
+	//tmpl := template.Must(template.ParseFiles("html/listProducts.html"))
 
 	filter := getProductsFilter(productType, r)
-	finalFilter := bson.M{"$and": []bson.M{buildFilter, filter}}
 
-	productsList, err := productsListing(productType, finalFilter, w)
+	searchFilter := filters.SearchProducts(searchQuery)
+	if searchFilter != nil {
+		search = true
+	}
+	finalFilter := bson.M{"$and": []bson.M{buildFilter, filter, searchFilter}}
+
+	perPageLimit := 7
+	productsList, productsNumber, err := productsListing(productType, finalFilter, pageNumber, perPageLimit, w)
 	if err != nil {
 		HandleError(err, logger, w)
 		return
 	}
 
+	totalPages := int(math.Ceil(float64(productsNumber) / float64(perPageLimit)))
+
 	user, _ := data.GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
 	build, err := getBuild(r)
+
+	if !search {
+		searchQuery = ""
+	}
 
 	dataToSend := struct {
 		ProductType  string
@@ -516,15 +586,21 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 		Build        *data.Build
 		User         data.User
 		PcBuilder    bool
+		CurrentPage  int
+		TotalPages   int
+		SearchQuery  string
 	}{
 		ProductType:  productType,
 		ProductsList: productsList,
 		Build:        build,
 		User:         user,
 		PcBuilder:    pcBuilder,
+		CurrentPage:  pageNumber,
+		TotalPages:   totalPages,
+		SearchQuery:  searchQuery,
 	}
 
-	err = tmpl.Execute(w, dataToSend)
+	err = tmpl.ExecuteTemplate(w, "listProducts.html", dataToSend)
 	if err != nil {
 		return
 	}
@@ -542,7 +618,7 @@ func getBuild(r *http.Request) (*data.Build, error) {
 	build := &data.Build{}
 
 	getProduct := func(productType string, productID primitive.ObjectID) (data.Product, error) {
-		products, err := productsListing(productType, bson.M{"_id": productID}, nil)
+		products, _, err := productsListing(productType, bson.M{"_id": productID}, 0, 0, nil)
 		if err != nil || len(products) == 0 {
 			return data.Product{}, err
 		}
@@ -676,19 +752,28 @@ func getFullBuild(r *http.Request) (*data.FullBuild, error) {
 	return build, nil
 }
 
-func productsListing(productType string, filter bson.M, w http.ResponseWriter) ([]data.Product, error) {
+func productsListing(productType string, filter bson.M, pageNumber int, perPageLimit int, w http.ResponseWriter) ([]data.Product, int, error) {
 	logger := logging.GetLogger()
+	skip := (pageNumber - 1) * perPageLimit
 
 	collection, _, err := defineStruct(productType)
+
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+
+	totalProducts, err := collection.CountDocuments(context.TODO(), filter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+		return nil, 0, err
+	}
+
 	var productsList []data.Product
 
-	cur, err := data.GetProducts(collection, filter)
+	cur, err := data.GetProducts(collection, filter, skip, perPageLimit)
 	if err != nil {
 		logger.Errorf("Error when trying to get products: %v", err)
-		return nil, err
+		return nil, 0, err
 	}
 	defer func(cur *mongo.Cursor, ctx context.Context) {
 		err = cur.Close(ctx)
@@ -704,7 +789,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var cpuItem data.Cpu
 			err = cur.Decode(&cpuItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, cpuItem.Standardize())
@@ -712,7 +797,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var coolingItem data.Cooling
 			err = cur.Decode(&coolingItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, coolingItem.Standardize())
@@ -720,7 +805,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var motherboardItem data.Motherboard
 			err = cur.Decode(&motherboardItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, motherboardItem.Standardize())
@@ -728,7 +813,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var housingItem data.Housing
 			err = cur.Decode(&housingItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, housingItem.Standardize())
@@ -736,7 +821,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var hddItem data.Hdd
 			err = cur.Decode(&hddItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, hddItem.Standardize())
@@ -744,7 +829,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var ssdItem data.Ssd
 			err = cur.Decode(&ssdItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, ssdItem.Standardize())
@@ -752,7 +837,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var powerSupplyItem data.PowerSupply
 			err = cur.Decode(&powerSupplyItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, powerSupplyItem.Standardize())
@@ -760,7 +845,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var gpuItem data.Gpu
 			err = cur.Decode(&gpuItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, gpuItem.Standardize())
@@ -768,13 +853,13 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 			var ramItem data.Ram
 			err = cur.Decode(&ramItem)
 			if err != nil {
-				logger.Infof("error: %v", err)
+				logger.Errorf("error: %v", err)
 				continue
 			}
 			productsList = append(productsList, ramItem.Standardize())
 		default:
 			logger.Errorf("Error: invalid product type value!")
-			return productsList, errors.New("invalid product type")
+			return productsList, int(totalProducts), errors.New("invalid product type")
 		}
 	}
 
@@ -783,7 +868,7 @@ func productsListing(productType string, filter bson.M, w http.ResponseWriter) (
 	}
 
 	logger.Infof("Found multiple items: %v", len(productsList))
-	return productsList, nil
+	return productsList, int(totalProducts), nil
 }
 
 func decodeProduct(cur *mongo.Cursor, item interface{}) error {
