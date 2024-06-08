@@ -160,11 +160,9 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if recovery == "linkSent" {
-		token, err = emailVerification.GenerateToken()
-		if err != nil {
-			http.Error(w, "Server error", http.StatusInternalServerError)
-			return
-		}
+		action := "/shop"
+		message := "If your email is correct, we will send a recovery link to it."
+		_ = showMessage(action, message, w)
 
 		var user data.User
 		user, err = data.GetUser(email)
@@ -175,6 +173,12 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 
 		if user.Verified != true {
 			logger.Infof("Unverified user %s", email)
+			return
+		}
+
+		token, err = emailVerification.GenerateToken()
+		if err != nil {
+			http.Error(w, "Server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -193,9 +197,7 @@ func RecoverPassword(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not send an email. Try later.", http.StatusInternalServerError)
 			return
 		}
-		action := "/shop"
-		message := "If your email is correct, we will send a recovery link to it."
-		_ = showMessage(action, message, w)
+
 		return
 	} else if recovery == "newPassword" {
 		tmpl := template.Must(template.ParseFiles("html/passwordRecovery.html"))
