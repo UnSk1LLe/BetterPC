@@ -29,34 +29,76 @@
         addedText.style.display = 'none';
     }
 });*/
-const urlParams = new URLSearchParams(window.location.search);
+let urlParams = new URLSearchParams(window.location.search);
 let listCompatibleOnly = urlParams.get('listCompatibleOnly');
 let search = urlParams.get('search')
 listCompatibleOnly = listCompatibleOnly === 'true';
 
-function listProducts(productType, pageNumber, searchQuery) {
-    const urlParams = new URLSearchParams(window.location.search);
+function listProducts(productType, pageNumber, searchQuery, saveFilters) {
+    let urlParams = new URLSearchParams(window.location.search);
+    const sort = document.getElementById('sort-price').value;
     urlParams.set('productType', productType);
     urlParams.set('listCompatibleOnly', listCompatibleOnly);
-    urlParams.set('pageNumber', pageNumber);
-    if (searchQuery) {
-        urlParams.set('search', searchQuery);
+    if (saveFilters) {
+        urlParams.set('pageNumber', pageNumber);
+        urlParams.set('sort', sort);
+        if (searchQuery) {
+            urlParams.set('search', searchQuery);
+        } else {
+            urlParams.delete('search');
+        }
+
+        //Include current filter parameters
+        document.querySelectorAll('#filters-form input, #filters-form select').forEach(input => {
+            if (input.type === 'checkbox') {
+                if (input.checked) {
+                    let exists = false;
+                    urlParams.forEach((value, name) => {
+                        if (name === input.name && value === input.value) {
+                            exists = true;
+                        }
+                    });
+                    if (!exists) {
+                        urlParams.append(input.name, input.value);
+                    }
+                } else {
+                    urlParams.delete(input.name, input.value);
+                }
+            } else if (input.type === 'number' || input.type === 'text' || input.tagName.toLowerCase() === 'select') {
+                if (input.value) {
+                    let exists = false;
+                    urlParams.forEach((value, name) => {
+                        if (name === input.name && value === input.value) {
+                            exists = true;
+                        }
+                    });
+                    if (!exists) {
+                        urlParams.set(input.name, input.value);
+                    }
+                } else {
+                    urlParams.delete(input.name);
+                }
+            }
+        });
     } else {
+        urlParams.delete('sort');
         urlParams.delete('search');
+        urlParams.set('pageNumber', '1')
     }
+
     window.location.href = `/listProducts?${urlParams.toString()}`;
 }
 
-function filterProducts(productType) {
+/*function filterProducts(productType) {
     const form = document.getElementById('filters-form');
     form.action = `/listProducts?productType=${encodeURIComponent(productType)}`;
     form.submit();
-}
+}*/
 
 function performSearch() {
     const searchInput = document.getElementById('search-input').value;
     let productType = urlParams.get('productType');
-    listProducts(productType, 1, searchInput);
+    listProducts(productType, 1, searchInput, true);
 }
 
 document.getElementById('search-input').addEventListener('keydown', function(event) {
@@ -198,17 +240,16 @@ document.addEventListener("DOMContentLoaded", function() {
     const productType = params.get('productType');
 
     const filtersContainer = document.getElementById('filter-container');
-    const productList = document.getElementById('product-list');
 
     fetch(`./assets/data/filters.json`)
         .then(response => response.json())
         .then(data => {
             const filterObjectName = `${productType}Filters`;
             const filters = data[filterObjectName];
-            populateFilters(filters);
+            populateFilters(filters, params);
         });
 
-    function populateFilters(filters) {
+    function populateFilters(filters, params) {
         filtersContainer.innerHTML = '';
         for (const filterName in filters) {
             const filterDiv = document.createElement('div');
@@ -216,17 +257,20 @@ document.addEventListener("DOMContentLoaded", function() {
             const options = filters[filterName];
             if (Array.isArray(options)) {
                 options.forEach(option => {
+                    const checked = params.getAll(filterName).includes(option.toString()) ? 'checked' : '';
                     filterDiv.innerHTML += `
-                        <input type="checkbox" id="${filterName}-${option}" name="${filterName}" value="${option}">
+                        <input type="checkbox" id="${filterName}-${option}" name="${filterName}" value="${option}" ${checked}>
                         <label for="${filterName}-${option}">${option}</label><br>
                     `;
                 });
             } else if (typeof options === 'object' && options.min !== undefined && options.max !== undefined) {
+                const min = params.get(`${filterName}-min`);
+                const max = params.get(`${filterName}-max`);
                 filterDiv.innerHTML += `
                     <label for="${filterName}-min">Min:</label>
-                    <input type="number" id="${filterName}-min" name="${filterName}-min" value="${options.min}"><br>
+                    <input type="number" id="${filterName}-min" name="${filterName}-min" ${min ? `value="${min}"` : `placeholder="${options.min}"`}><br>
                     <label for="${filterName}-max">Max:</label>
-                    <input type="number" id="${filterName}-max" name="${filterName}-max" value="${options.max}">
+                    <input type="number" id="${filterName}-max" name="${filterName}-max" ${max ? `value="${max}"` : `placeholder="${options.max}"`}>
                 `;
             }
             filtersContainer.appendChild(filterDiv);
@@ -236,14 +280,18 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('filters-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const filterParams = new URLSearchParams();
-        formData.forEach((value, key) => filterParams.append(key, value));
+        const urlParams = new URLSearchParams(window.location.search);
+        const productType = urlParams.get('productType');
+        const pageNumber = 1; //Reset to the first page on new filter submission
+        const searchQuery = urlParams.get('search');
 
-        fetch(`/listProducts?element=${productType}&${filterParams.toString()}`)
-            .then(response => response.json())
-            .then(data => {
-            });
+        formData.forEach((value, key) => {
+            urlParams.set(key, value);
+        });
+
+        listProducts(productType, pageNumber, searchQuery, true);
     });
+
 
     const toggleDisplay = document.getElementById('toggleDisplay');
     const build = document.getElementById('build');
@@ -276,4 +324,9 @@ document.querySelectorAll('.old-price').forEach(function(element) {
 document.querySelectorAll('.discount-price').forEach(function(element) {
     let discountPrice = parseInt(element.innerText);
     element.innerText = formatPrice(discountPrice) + " ₸";
+});
+
+document.querySelectorAll('.product-price').forEach(function(element) {
+    let productPrice = parseInt(element.innerText);
+    element.innerText = formatPrice(productPrice) + " ₸";
 });

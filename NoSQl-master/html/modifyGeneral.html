@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Modify CPU</title>
+    <link rel="stylesheet" href="./assets/css/mainStyle.css">
+</head>
+<body>
+<main>
+    <button class="back-button" onclick="window.history.back()">&#60; Back</button>
+    <div class="add-product-card">
+        <h1>Modify Product</h1>
+        <form id="productForm" method="post" action="">
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer:</label>
+                <input type="text" id="manufacturer" name="manufacturer" value="{{.Product.General.Manufacturer}}" required>
+            </div>
+            <div class="form-group">
+                <label for="model">Model:</label>
+                <input type="text" id="model" name="model" value="{{.Product.General.Model}}" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="price" name="price" min="0" value="{{.Product.General.Price}}" required>
+                    <span class="unit">₸</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="discount">Discount:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="discount" name="discount" min="0" max="100" value="{{.Product.General.Discount}}" required>
+                    <span class="unit">%</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" name="amount" min="0" value="{{.Product.General.Amount}}" required>
+            </div>
+            <button type="button" class="update-button" name="modifyCpu" onclick="modifyProduct('{{.ProductType}}', '{{.Product.ID}}')">Update</button>
+        </form>
+        <button type="button" class="delete-button" name="deleteCpu" onclick="deleteProduct('{{.ProductType}}', '{{.Product.ID}}')">Delete</button>
+        <script src="./assets/js/modifyCpu.js"></script>
+        <script src="./assets/js/modifyProduct.js"></script>
+    </div>
+</main>
+</body>
+</html>

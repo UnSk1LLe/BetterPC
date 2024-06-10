@@ -59,7 +59,7 @@
         <h2>Filters</h2>
         <form id="filters-form" method="post" action="">
             <div id="filter-container"></div>
-            <button class="submit-button" type="submit" onclick="filterProducts('{{.ProductType}}')">Apply</button>
+            <button class="submit-button" type="submit" onclick="listProducts('{{.ProductType}}', 1, '{{.SearchQuery}}', true)">Apply</button>
         </form>
     </div>
 
@@ -77,7 +77,7 @@
                 <img src="./assets/images/cpu.jpg" alt="CPU">
                 <div class="component-details">
                     <h3>{{.Build.CPU.Name}}</h3>
-                    <p>{{.Build.CPU.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.CPU.General.Price .Build.CPU.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -92,7 +92,7 @@
                 <img src="./assets/images/motherboard.jpg" alt="Motherboard">
                 <div class="component-details">
                     <h3>{{.Build.Motherboard.Name}}</h3>
-                    <p>{{.Build.Motherboard.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.Motherboard.General.Price .Build.Motherboard.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -107,7 +107,7 @@
                 <img src="./assets/images/ram.jpg" alt="RAM">
                 <div class="component-details">
                     <h3>{{.Build.RAM.Name}}</h3>
-                    <p>{{.Build.RAM.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.RAM.General.Price .Build.RAM.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -122,7 +122,7 @@
                 <img src="./assets/images/gpu.jpg" alt="GPU">
                 <div class="component-details">
                     <h3>{{.Build.GPU.Name}}</h3>
-                    <p>{{.Build.GPU.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.GPU.General.Price .Build.GPU.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -137,7 +137,7 @@
                 <img src="./assets/images/ssd.jpg" alt="SSD">
                 <div class="component-details">
                     <h3>{{.Build.SSD.Name}}</h3>
-                    <p>{{.Build.SSD.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.SSD.General.Price .Build.SSD.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -152,7 +152,7 @@
                 <img src="./assets/images/hdd.jpg" alt="HDD">
                 <div class="component-details">
                     <h3>{{.Build.HDD.Name}}</h3>
-                    <p>{{.Build.HDD.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.HDD.General.Price .Build.HDD.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -167,7 +167,7 @@
                 <img src="./assets/images/cooling.jpg" alt="Cooling">
                 <div class="component-details">
                     <h3>{{.Build.Cooling.Name}}</h3>
-                    <p>{{.Build.Cooling.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.Cooling.General.Price .Build.Cooling.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -182,7 +182,7 @@
                 <img src="./assets/images/powersupply.jpg" alt="Power Supply">
                 <div class="component-details">
                     <h3>{{.Build.PowerSupply.Name}}</h3>
-                    <p>{{.Build.PowerSupply.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.PowerSupply.General.Price .Build.PowerSupply.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -197,7 +197,7 @@
                 <img src="./assets/images/housing.jpg" alt="Housing">
                 <div class="component-details">
                     <h3>{{.Build.Housing.Name}}</h3>
-                    <p>{{.Build.Housing.General.Price}} ₸</p>
+                    <p class="product-price">{{ calculateDiscountPrice .Build.Housing.General.Price .Build.Housing.General.Discount }}</p>
                 </div>
                 {{ else }}
                 <div class="empty-component">
@@ -216,6 +216,7 @@
         <div id="sort">
             <label for="sort-price">Sort by Price:</label>
             <select id="sort-price">
+                <option value="">None</option>
                 <option value="asc">Low to High</option>
                 <option value="desc">High to Low</option>
             </select>
@@ -249,13 +250,13 @@
 
                     {{ if ne $item.General.Discount 0 }}
                     <p class="price">
-                        <span class="old-price">{{ $item.General.Price }} ₸</span>
+                        <span class="old-price">{{ $item.General.Price }}</span>
                         <span class="discount-percentage">-{{ $item.General.Discount }}%</span>
-                        <span class="discount-price">{{ calculateDiscountPrice $item.General.Price $item.General.Discount }} ₸</span>
+                        <span class="discount-price">{{ calculateDiscountPrice $item.General.Price $item.General.Discount }}</span>
                     </p>
                     {{ else }}
                     <p class="price">
-                        <span class="discount-price">{{ $item.General.Price }} ₸</span>
+                        <span class="discount-price">{{ $item.General.Price }}</span>
                     </p>
                     {{ end }}
                 </div>
@@ -272,21 +273,21 @@
             <ul class="pagination-list">
                 {{ if gt .TotalPages 1 }}
                 {{ if ne .CurrentPage 1 }}
-                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', 1, '{{.SearchQuery}}')">&laquo;</a></li>
-                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}','{{ sub .CurrentPage 1 }}', '{{.SearchQuery}}')">&lsaquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', 1, '{{.SearchQuery}}', true)">&laquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}','{{ sub .CurrentPage 1 }}', '{{.SearchQuery}}', true)">&lsaquo;</a></li>
                 {{ end }}
 
                 {{ range $page := until 1 .TotalPages }}
                 {{ if eq $page $.CurrentPage }}
                 <li class="pagination-item active"><span>{{ $page }}</span></li>
                 {{ else }}
-                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ $.ProductType }}', '{{ $page }}', '{{$.SearchQuery}}')">{{ $page }}</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ $.ProductType }}', '{{ $page }}', '{{$.SearchQuery}}', true)">{{ $page }}</a></li>
                 {{ end }}
                 {{ end }}
 
                 {{ if ne .CurrentPage .TotalPages }}
-                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ add .CurrentPage 1 }}', '{{.SearchQuery}}')">&rsaquo;</a></li>
-                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ .TotalPages }}', '{{.SearchQuery}}')">&raquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ add .CurrentPage 1 }}', '{{.SearchQuery}}', true)">&rsaquo;</a></li>
+                <li class="pagination-item"><a href="javascript:void(0);" onclick="listProducts('{{ .ProductType }}', '{{ .TotalPages }}', '{{.SearchQuery}}', true)">&raquo;</a></li>
                 {{ end }}
                 {{ end }}
             </ul>
@@ -297,7 +298,7 @@
             <img src="./assets/images/cpu.jpg" alt="CPU image" class="detail-image">
             <h4>{{.Build.CPU.Name}}</h4>
             <p>{{.Build.CPU.Description}}</p>
-            <p>{{.Build.CPU.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.CPU.General.Price .Build.CPU.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('cpu')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('cpu')">Delete</button>
@@ -310,7 +311,7 @@
             <img src="./assets/images/motherboard.jpg" alt="Motherboard image" class="detail-image">
             <h4>{{.Build.Motherboard.Name}}</h4>
             <p>{{.Build.Motherboard.Description}}</p>
-            <p>{{.Build.Motherboard.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.Motherboard.General.Price .Build.Motherboard.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('motherboard')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('motherboard')">Delete</button>
@@ -323,7 +324,7 @@
             <img src="./assets/images/ram.jpg" alt="RAM image" class="detail-image">
             <h4>{{.Build.RAM.Name}}</h4>
             <p>{{.Build.RAM.Description}}</p>
-            <p>{{.Build.RAM.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.RAM.General.Price .Build.RAM.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('ram')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('ram')">Delete</button>
@@ -336,7 +337,7 @@
             <img src="./assets/images/gpu.jpg" alt="GPU image" class="detail-image">
             <h4>{{.Build.GPU.Name}}</h4>
             <p>{{.Build.GPU.Description}}</p>
-            <p>{{.Build.GPU.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.GPU.General.Price .Build.GPU.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('gpu')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('gpu')">Delete</button>
@@ -349,7 +350,7 @@
             <img src="./assets/images/ssd.jpg" alt="SSD image" class="detail-image">
             <h4>{{.Build.SSD.Name}}</h4>
             <p>{{.Build.SSD.Description}}</p>
-            <p>{{.Build.SSD.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.SSD.General.Price .Build.SSD.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('ssd')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('ssd')">Delete</button>
@@ -362,7 +363,7 @@
             <img src="./assets/images/hdd.jpg" alt="HDD image" class="detail-image">
             <h4>{{.Build.HDD.Name}}</h4>
             <p>{{.Build.HDD.Description}}</p>
-            <p>{{.Build.HDD.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.HDD.General.Price .Build.HDD.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('hdd')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('hdd')">Delete</button>
@@ -375,7 +376,7 @@
             <img src="./assets/images/cooling.jpg" alt="Cooling image" class="detail-image">
             <h4>{{.Build.Cooling.Name}}</h4>
             <p>{{.Build.Cooling.Description}}</p>
-            <p>{{.Build.Cooling.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.Cooling.General.Price .Build.Cooling.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('cooling')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('cooling')">Delete</button>
@@ -388,7 +389,7 @@
             <img src="./assets/images/powersupply.jpg" alt="Power Supply image" class="detail-image">
             <h4>{{.Build.PowerSupply.Name}}</h4>
             <p>{{.Build.PowerSupply.Description}}</p>
-            <p>{{.Build.PowerSupply.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.PowerSupply.General.Price .Build.PowerSupply.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('powersupply')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('powersupply')">Delete</button>
@@ -401,7 +402,7 @@
             <img src="./assets/images/housing.jpg" alt="Housing image" class="detail-image">
             <h4>{{.Build.Housing.Name}}</h4>
             <p>{{.Build.Housing.Description}}</p>
-            <p>{{.Build.Housing.General.Price}} ₸</p>
+            <p class="product-price">{{ calculateDiscountPrice .Build.Housing.General.Price .Build.Housing.General.Discount }}</p>
             <div class="detail-actions">
                 <button class="replace-btn" onclick="replaceComponent('housing')">Replace</button>
                 <button class="delete-btn" onclick="deleteComponent('housing')">Delete</button>

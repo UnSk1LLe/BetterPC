@@ -210,6 +210,9 @@ func OpenCart(w http.ResponseWriter, r *http.Request) {
 	userCart, err := getItemsFromItemHeaders(userCartHeaders, dbName, w)
 	if err != nil {
 		logger.Errorf("Error getting cart data: %v", err)
+		ClearUserCart(w, r)
+		HandleError(err, logger, w)
+		return
 	}
 
 	dataToSend := struct {
@@ -243,13 +246,11 @@ func getItemsFromItemHeaders(userCartHeaders []data.ItemHeader, dbName string, w
 		result, err := data.GetProductById(collection, header.ID)
 		if err != nil {
 			logger.Errorf("Error fetching product details: %v", err)
-			http.Error(w, "Error fetching product details", http.StatusInternalServerError)
 			return nil, err
 		}
 		err = result.Decode(product)
 		if err != nil {
 			logger.Errorf("Error decoding product: %v", err)
-			http.Error(w, "Product not found", http.StatusNotFound)
 			return nil, err
 		}
 
@@ -378,15 +379,18 @@ func DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 }
 
 func ClearUserCart(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
 	userID := data.ShowUser(r).ID.Hex()
 
 	cartCookie, err := r.Cookie("cart" + userID)
 	cartCookie.MaxAge = -1
 	if err != nil {
+		logger.Errorf("Failed to clear cart: %v", err)
 		return
 	}
 
 	http.SetCookie(w, cartCookie)
+	logger.Infof("Cleared user cart: %v", userID)
 }
 
 func ClearUserBuild(w http.ResponseWriter, r *http.Request) {
@@ -488,5 +492,5 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Infof("Order cancelled: %v", itemID)
-	_ = showMessage("/showUserProfile", "Order has been cancelled successfully!", w)
+	_ = showMessage("/shop", "Order has been cancelled successfully!", w)
 }

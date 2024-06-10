@@ -208,8 +208,47 @@ func ModifyProductForm(w http.ResponseWriter, r *http.Request) {
 		var item data.Cpu
 		_, err = getAndDecodeProduct(data.CpuCollection, &item, ObjID)
 		product = item
+	case "motherboard":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Motherboard
+		_, err = getAndDecodeProduct(data.MotherboardCollection, &item, ObjID)
+		product = item
+	case "gpu":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Gpu
+		_, err = getAndDecodeProduct(data.GpuCollection, &item, ObjID)
+		product = item
+	case "ram":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Ram
+		_, err = getAndDecodeProduct(data.RamCollection, &item, ObjID)
+		product = item
+	case "ssd":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Ssd
+		_, err = getAndDecodeProduct(data.SsdCollection, &item, ObjID)
+		product = item
+	case "hdd":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Hdd
+		_, err = getAndDecodeProduct(data.HddCollection, &item, ObjID)
+		product = item
+	case "cooling":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Cooling
+		_, err = getAndDecodeProduct(data.CoolingCollection, &item, ObjID)
+		product = item
+	case "housing":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.Housing
+		_, err = getAndDecodeProduct(data.HousingCollection, &item, ObjID)
+		product = item
+	case "powersupply":
+		tmpl = template.Must(template.ParseFiles("html/modifyGeneral.html"))
+		var item data.PowerSupply
+		_, err = getAndDecodeProduct(data.PowerSupplyCollection, &item, ObjID)
+		product = item
 	default:
-		_ = showMessage("/shop", "404 Not found!", w)
 		return
 	}
 	if err != nil {
@@ -247,7 +286,7 @@ func ModifyProduct(w http.ResponseWriter, r *http.Request) {
 	case "cpu":
 		err = modifyCpu(ObjID, r)
 	default:
-		_ = showMessage("/shop", "Internal server error!", w)
+		err = modifyProductGeneral(ObjID, r)
 	}
 	if err != nil {
 		logger.Errorf("Error updating product <%s> with ID", productType)
@@ -378,6 +417,50 @@ func modifyCpu(ID primitive.ObjectID, r *http.Request) error {
 		return errors.New("not a post method")
 	}
 	logger.Infof("CPU record with ID: %s was UPDATED!", ID)
+	return nil
+}
+
+func modifyProductGeneral(ID primitive.ObjectID, r *http.Request) error {
+	logger := logging.GetLogger()
+	productType := r.URL.Query().Get("productType")
+
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			return err
+		}
+
+		price, _ := strconv.Atoi(r.FormValue("price"))
+		discount, _ := strconv.Atoi(r.FormValue("discount"))
+		amount, _ := strconv.Atoi(r.FormValue("amount"))
+
+		general := data.General{
+			Manufacturer: r.FormValue("man"),
+			Model:        r.FormValue("model"),
+			Price:        price,
+			Discount:     discount,
+			Amount:       amount,
+		}
+
+		filter := bson.M{"_id": ID}
+
+		update := bson.M{"$set": bson.M{
+			"general": general,
+		}}
+
+		collection, err := data.DefineCollection(productType)
+		if err != nil {
+			return err
+		}
+		res, err := data.UpdateProduct(collection, filter, update)
+		fmt.Println(res)
+		if err != nil {
+			logger.Errorf("A bulk write error occurred: %v", err)
+			return err
+		}
+	} else {
+		return errors.New("not a post method")
+	}
+	logger.Infof("%s record with ID: %s was UPDATED!", productType, ID)
 	return nil
 }
 
@@ -523,7 +606,7 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 	productType := r.URL.Query().Get("productType")
 	listCompatibleOnly := r.URL.Query().Get("listCompatibleOnly")
 	searchQuery := r.URL.Query().Get("search")
-	fmt.Println(1, searchQuery)
+
 	var buildFilter bson.M
 	var err error
 	search := false
@@ -554,8 +637,6 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//tmpl := template.Must(template.ParseFiles("html/listProducts.html"))
-
 	filter := getProductsFilter(productType, r)
 
 	searchFilter := filters.SearchProducts(searchQuery)
@@ -565,7 +646,7 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 	finalFilter := bson.M{"$and": []bson.M{buildFilter, filter, searchFilter}}
 
 	perPageLimit := 7
-	productsList, productsNumber, err := productsListing(productType, finalFilter, pageNumber, perPageLimit, w)
+	productsList, productsNumber, err := productsListing(productType, finalFilter, pageNumber, perPageLimit)
 	if err != nil {
 		HandleError(err, logger, w)
 		return
@@ -618,7 +699,7 @@ func getBuild(r *http.Request) (*data.Build, error) {
 	build := &data.Build{}
 
 	getProduct := func(productType string, productID primitive.ObjectID) (data.Product, error) {
-		products, _, err := productsListing(productType, bson.M{"_id": productID}, 0, 0, nil)
+		products, _, err := productsListing(productType, bson.M{"_id": productID}, 0, 0)
 		if err != nil || len(products) == 0 {
 			return data.Product{}, err
 		}
@@ -752,7 +833,7 @@ func getFullBuild(r *http.Request) (*data.FullBuild, error) {
 	return build, nil
 }
 
-func productsListing(productType string, filter bson.M, pageNumber int, perPageLimit int, w http.ResponseWriter) ([]data.Product, int, error) {
+func productsListing(productType string, filter bson.M, pageNumber int, perPageLimit int) ([]data.Product, int, error) {
 	logger := logging.GetLogger()
 	skip := (pageNumber - 1) * perPageLimit
 

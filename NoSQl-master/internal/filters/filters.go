@@ -64,6 +64,30 @@ func getInterval(from string, to string) (int, int, error) {
 	return minValue, maxValue, nil
 }
 
+func getIntervalPrice(r *http.Request) (int, int, error) {
+	keyFromStr := r.Form.Get("Price-min")
+	keyToStr := r.Form.Get("Price-max")
+
+	var keyFrom, keyTo int
+	var err error
+
+	if keyFromStr != "" {
+		keyFrom, err = strconv.Atoi(keyFromStr)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	if keyToStr != "" {
+		keyTo, err = strconv.Atoi(keyToStr)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+
+	return keyFrom, keyTo, nil
+}
+
 func getIntervalFilter(key string, r *http.Request) bson.M {
 	keyFromStr := r.Form.Get(key + "-min")
 	keyToStr := r.Form.Get(key + "-max")
@@ -208,29 +232,53 @@ func FilterMotherboard(r *http.Request) bson.M {
 	pcie = r.Form["PCI-E"]
 
 	filter := bson.M{}
+	priceFrom, priceTo, err := getIntervalPrice(r)
+	if err != nil {
+		// Handle error
+	}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	if priceFrom != 0 || priceTo != 0 {
+		effectivePrice := bson.M{
+			"$subtract": []interface{}{
+				"$general.price",
+				bson.M{
+					"$multiply": []interface{}{
+						"$general.price",
+						bson.M{"$divide": []interface{}{"$general.discount", 100}},
+					},
+				},
+			},
+		}
+		priceFilter := bson.M{}
+		if priceFrom != 0 {
+			priceFilter["$gte"] = priceFrom
+		}
+		if priceTo != 0 {
+			priceFilter["$lte"] = priceTo
+		}
+		filter["$expr"] = bson.M{
+			"$and": []bson.M{
+				{"$gte": []interface{}{effectivePrice, priceFrom}},
+				{"$lte": []interface{}{effectivePrice, priceTo}},
+			},
+		}
+	}
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
 	}
-
 	if len(formFactors) > 0 {
 		filter["form_factor"] = bson.M{"$in": formFactors}
 	}
-
 	if len(chipsets) > 0 {
 		filter["chipset"] = bson.M{"$in": chipsets}
 	}
-
 	if len(ramTypes) > 0 {
 		filter["ram.type"] = bson.M{"$in": ramTypes}
 	}
-
 	if len(sockets) > 0 {
 		filter["socket"] = bson.M{"$in": sockets}
 	}
-
 	if len(pcie) > 0 {
 		filter["pci_standard"] = bson.M{"$in": pcie}
 	}

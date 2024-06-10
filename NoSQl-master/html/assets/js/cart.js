@@ -1,4 +1,4 @@
-//Multiplies price by quantity. used onload
+// Multiplies price by quantity. Used onload
 function updatePriceAndQuantity(index) {
     let quantityElement = document.getElementById('quantity' + index);
     let currentQuantity = parseInt(quantityElement.textContent);
@@ -6,10 +6,11 @@ function updatePriceAndQuantity(index) {
     let pricePerUnit = parseInt(cardElement.getAttribute('data-price'));
     let priceElement = document.getElementById('price' + index);
 
-    priceElement.textContent = currentQuantity * pricePerUnit;
+    let totalPrice = currentQuantity * pricePerUnit;
+    priceElement.textContent = formatPrice(totalPrice);
 }
 
-//Changes quantity and price
+// Changes quantity and price
 function changeQuantity(index, action) {
     let quantityElement = document.getElementById('quantity' + index);
     let currentQuantity = parseInt(quantityElement.textContent);
@@ -32,7 +33,8 @@ function changeQuantity(index, action) {
     }
 
     quantityElement.textContent = currentQuantity;
-    priceElement.textContent = currentQuantity * pricePerUnit;
+    let totalPrice = currentQuantity * pricePerUnit;
+    priceElement.textContent = formatPrice(totalPrice);
 
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/updateCart', true);
@@ -94,4 +96,8 @@ window.onload = function() {
 
 function showProduct(productType, productID) {
     window.location.href = `/showProduct?productType=${encodeURIComponent(productType)}&productID=${encodeURIComponent(productID)}`;
+}
+
+function formatPrice(price) {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }

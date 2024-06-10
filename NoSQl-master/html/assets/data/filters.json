@@ -39,7 +39,7 @@
     "Socket": ["AM5", "AM4", "LGA 1700", "LGA 1200", "LGA 1151-v2", "LGA 1151"],
     "Intel chipset groups": ["Z", "B", "H", "Q"],
     "AMD chipset groups": ["X", "B", "A"],
-    "Form-factor": ["E-ATX", "Standard-ATX", "Micro-ATX", "Mini-ITX"],
+    "Form-factor": ["E-ATX", "ATX", "micro-ATX", "mini-ITX"],
     "Ram type": ["DDR3", "DDR4", "DDR5"],
     "Ram slots": [2, 4, 8],
     "M2 interfaces": [0, 1, 2, 3, 4, 5],
@@ -84,8 +84,8 @@
       "min": 0,
       "max": 10000000
     },
-    "Manufacturer": ["NVIDIA", "AMD"],
-    "Architecture": ["NVIDIA Ampere", "NVIDIA Turing", "NVIDIA Pascal", "AMD RDNA 2", "AMD RDNA", "AMD GCN"],
+    "Manufacturer": ["Nvidia", "MSI", "Gigabyte", "ASUS"],
+    "Architecture": ["Ampere", "Turing", "Pascal", "RDNA 2", "RDNA", "GCN"],
     "Memory Capacity": [2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64],
     "Memory Type": ["GDDR6X", "GDDR6", "GDDR5X", "GDDR5", "HBM2", "HBM"],
     "GPU Frequency": {

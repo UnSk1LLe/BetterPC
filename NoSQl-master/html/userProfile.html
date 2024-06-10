@@ -100,12 +100,12 @@
                             <div class="product-details">
                                 <h3 class="product-name">{{ .Manufacturer }} {{ .Model }}</h3>
                                 <p>Amount: <span class="amount">{{ .ItemHeader.Amount }}</span></p>
-                                <p>Price: <span class="total-price"></span> ₸</p>
+                                <p>Price: <span class="total-price"></span></p>
                             </div>
                         </div>
                         {{ end }}
                     </div>
-                    <p>Order Price: <span class="order-status">{{.Price}} ₸</span></p>
+                    <p>Order Price: <span class="discount-price">{{.Price}}</span></p>
                     <p>Status: <span class="order-status">{{.Status}}</span></p>
                     <button class="cancel-button" onclick="confirmCancel('{{.ID}}')">Cancel</button>
                 </div>

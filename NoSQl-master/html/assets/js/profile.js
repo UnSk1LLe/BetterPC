@@ -1,5 +1,5 @@
 function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
+    let i, tabcontent, tablinks;
 
     //Hide all tab content
     tabcontent = document.getElementsByClassName("tabcontent");
@@ -17,28 +17,28 @@ function openTab(evt, tabName) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    var tablinks = document.getElementsByClassName("tablinks");
-    for (var i = 0; i < tablinks.length; i++) {
+    let tablinks = document.getElementsByClassName("tablinks");
+    for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].addEventListener("click", function(event) {
             openTab(event, this.getAttribute("data-tab"));
         });
     }
 
-    var items = document.getElementsByClassName('item-details');
-    for (var i = 0; i < items.length; i++) {
-        var price = parseFloat(items[i].getAttribute('data-price'));
-        var amount = parseFloat(items[i].getAttribute('data-amount'));
-        var totalPrice = price * amount;
-        items[i].querySelector('.total-price').textContent = totalPrice.toFixed(2);
+    let items = document.getElementsByClassName('item-details');
+    for (let i = 0; i < items.length; i++) {
+        let price = parseFloat(items[i].getAttribute('data-price'));
+        let amount = parseFloat(items[i].getAttribute('data-amount'));
+        let totalPrice = price * amount
+        items[i].querySelector('.total-price').textContent = formatPrice(totalPrice.toString()) + " ₸";
     }
 });
 
 function confirmCancel(productId) {
     if (confirm("Are you sure you want cancel the order with ID: " + productId)) {
-        var cancelForm = document.createElement('form');
+        let cancelForm = document.createElement('form');
         cancelForm.method = 'post';
         cancelForm.action = '/cancelOrder';
-        var input = document.createElement('input');
+        let input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'orderID';
         input.value = productId;
@@ -58,3 +58,12 @@ function toggleDetails(button) {
         button.textContent = "Show Details";
     }
 }
+
+function formatPrice(price) {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+document.querySelectorAll('.discount-price').forEach(function(element) {
+    let productPrice = parseInt(element.innerText);
+    element.innerText = formatPrice(productPrice) + " ₸";
+});
+
