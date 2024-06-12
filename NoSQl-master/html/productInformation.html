@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Processor</title>
-    <link rel="stylesheet" href="./assets/css/mainStyle.css"> <!-- Link to your main CSS file -->
+    <link rel="stylesheet" href="./assets/css/mainStyle.css">
 </head>
 <body>
 <header>
@@ -28,13 +28,14 @@
         </div>
         <div id="search-bar">
             <input type="text" id="search-input" placeholder="Search...">
-            <button id="search-button">
+            <button id="search-button" onclick="searchALl()">
                 <img src="./assets/icons/search.png" alt="Search">
             </button>
         </div>
         <div id="add-panel">
-            <div id="shopping-cart">
+            <div id="shopping-cart" class="shopping-cart">
                 <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+                <span id="cart-badge" class="cart-badge">5</span>
             </div>
             <div class="user-container">
                 <img src="./assets/icons/userdefault.png" alt="User Account">
@@ -188,11 +189,15 @@
                     </tr>
                     <tr>
                         <td class="description-label">Fans:</td>
-                        <td>{{ range .Product.Fans }}{{ . }} RPM {{ end }}</td>
+                        <td>{{ range .Product.Fans }}{{ . }} {{ end }}</td>
                     </tr>
                     <tr>
                         <td class="description-label">TDP:</td>
                         <td>{{ .Product.Tdp }}W</td>
+                    </tr>
+                    <tr>
+                        <td class="description-label">RPM:</td>
+                        <td>{{ range .Product.Rpm }}{{ . }} {{ end }}RPM</td>
                     </tr>
                     <tr>
                         <td class="description-label">Noise Level:</td>
@@ -592,13 +597,158 @@
             </div>
         </div>
         {{ end }}
-
-
+        <div>
+            {{ if ne .Product.General.Discount 0 }}
+            <p>
+                <span class="old-price">{{ .Product.General.Price }}</span>
+                <span class="discount-percentage">-{{ .Product.General.Discount }}%</span>
+                <span class="discount-price">{{ calculateDiscountPrice .Product.General.Price .Product.General.Discount }}</span>
+            </p>
+            {{ else }}
+            <p>
+                <span class="discount-price">{{ .Product.General.Price }}</span>
+            </p>
+            {{ end }}
+        </div>
 
         <div class="product-actions">
-            <h1>Compatibility mode here</h1>
+            {{ if gt .Product.General.Amount 0 }}
+            <button id="addToCartButton" class="buy-button" type="button" onclick="addToCart('{{.ProductType}}', '{{.Product.ID}}')">Add to cart</button>
+            {{ if .IsCompatible }}
+            <button id="addToBuildButton" name="addToBuildButton" class="compare-button" type="button" onclick="addToBuild('{{.ProductType}}', '{{.Product.ID}}')">Add to Build</button>
+            {{ else }}
+            <button name="notCompatible" class="buy-button" type="button" disabled>Incompatible</button>
+            {{ end }}
+            {{ else }}
+            <button name="outOfStock" class="buy-button" type="button" disabled>Out of stock</button>
+            {{ end }}
         </div>
     </div>
 </main>
+<script src="./assets/js/searchAll.js"></script>
+<script>
+    let userID = '{{.User.ID}}'.slice(10, 34)
+
+    function addToCart(productType, productID) {
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/addProductToCart', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    let cartButton = document.getElementById('addToCartButton')
+                    cartButton.style.backgroundColor = '#e3bc00';
+                    cartButton.innerText = 'In cart'
+                    cartButton.onclick = function () {
+                        window.location.href = `/openCart`
+                    }
+                    cartNumberInc()
+                } else {
+                    alert('Error adding product to cart');
+                }
+            }
+        };
+        let params = 'productType=' + encodeURIComponent(productType) + '&productID=' + encodeURIComponent(productID);
+        xhr.send(params);
+    }
+
+    function addToBuild(productType, productID) {
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/addProductToBuild', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    let buildButton = document.getElementById('addToBuildButton')
+                    buildButton.style.backgroundColor = '#e3bc00';
+                    buildButton.innerText = "Added to Build"
+                } else {
+                    alert('Error adding product to build');
+                }
+            }
+        };
+        let params = 'productType=' + encodeURIComponent(productType) + '&productID=' + encodeURIComponent(productID);
+        xhr.send(params);
+    }
+
+    function cartNumberInc() {
+        let counter = document.getElementById('cart-badge')
+        let number = parseInt(counter.innerText)
+        number++
+        counter.innerText = number.toString()
+        counter.style.display = 'block'
+    }
+
+
+    function inCartElementsNumber() {
+        let cart = getCookie('cart' + userID);
+        console.log(userID)
+        let counter = document.getElementById('cart-badge')
+        let number = 0
+
+        if (cart !== null) {
+            try {
+                cart = JSON.parse(decodeURIComponent(cart));
+                number = cart.length
+            } catch (e) {
+                console.error("No cart elements found", e);
+            }
+        }
+        counter.innerText = number.toString()
+
+        if (number > 0) {
+            counter.style.display = 'block'
+        } else {
+            counter.style.display = 'none'
+        }
+    }
+
+    function getCookie(name) {
+        let value = "; " + document.cookie;
+        let parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    function isProductInCart(productID) {
+        let cart = getCookie('cart' + userID);
+
+        if (cart !== null) {
+            try {
+                cart = JSON.parse(decodeURIComponent(cart));
+                return cart.some(item => item.ID === productID);
+            } catch (e) {
+                console.error("No cart elements found", e);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (isProductInCart('{{ .Product.ID }}'.slice(10, 34))) {
+            let cartButton = document.getElementById('addToCartButton')
+            cartButton.style.backgroundColor = '#e3bc00';
+            cartButton.innerText = 'In cart'
+            cartButton.onclick = function () {
+                window.location.href = `/openCart`
+            }
+        }
+        inCartElementsNumber()
+    });
+
+    function formatPrice(price) {
+        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    document.querySelectorAll('.old-price').forEach(function(element) {
+        let oldPrice = parseInt(element.innerText);
+        element.innerText = formatPrice(oldPrice) + " ₸";
+    });
+
+    document.querySelectorAll('.discount-price').forEach(function(element) {
+        let discountPrice = parseInt(element.innerText);
+        element.innerText = formatPrice(discountPrice) + " ₸";
+    });
+</script>
 </body>
 </html>

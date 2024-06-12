@@ -93,11 +93,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			HandleError(err, logger, w)
 		}
 
-		subject := "Verify your email address" //change domain in body!! !! ! !! !
-		body := fmt.Sprintf("Please click the following link to verify your email address: http://localhost:8080/verify?token=%s", token)
-		err = emailVerification.SendEmail(email, subject, body)
+		err = sendEmailVerificationToken(r, token)
 		if err != nil {
-			HandleError(errors.New("failed to send verification email"), logger, w)
+			HandleError(errors.New("failed to send verification token"), logger, w)
 			return
 		}
 
@@ -113,6 +111,53 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		_ = showMessage("/shop", err.Error(), w)
 		return
 	}
+}
+
+func SendVerificationToken(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	if data.IsVerifiedCurrentUser(r) {
+		_ = showMessage("/shop", "Your account is verified already!", w)
+		return
+	}
+	token, err := emailVerification.GenerateToken()
+	if err != nil {
+		HandleError(err, logger, w)
+		return
+	}
+	err = sendEmailVerificationToken(r, token)
+	if err != nil {
+		HandleError(errors.New("failed to send verification token"), logger, w)
+		return
+	}
+	messageText := "Verification link sent! Please, check your email to verify your account!"
+	_ = showMessage("/shop", messageText, w)
+	return
+}
+
+func sendEmailVerificationToken(r *http.Request, token string) error {
+	logger := logging.GetLogger()
+
+	user := data.ShowUser(r, false)
+
+	filter := bson.M{"_id": user.ID}
+	update := bson.M{"$set": bson.M{"verification_token": token}}
+
+	_, err := data.UpdateUser(filter, update)
+	if err != nil {
+		logger.Errorf("failed to update verification token: %v", err)
+		return err
+	}
+
+	email := user.UserInfo.Email
+	subject := "Verify your email address" //change domain in body!! !! ! !! !
+	body := fmt.Sprintf("Please click the following link to verify your email address: http://localhost:8080/verify?token=%s", token)
+	err = emailVerification.SendEmail(email, subject, body)
+	if err != nil {
+		logger.Errorf("Failed to send verification token to email: %v", err)
+		return err
+	}
+	logger.Infof("Verification token was sent to email: %s", email)
+	return nil
 }
 
 func VerifyEmailHandler(w http.ResponseWriter, r *http.Request) {

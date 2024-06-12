@@ -38,7 +38,12 @@ func Shop(w http.ResponseWriter, r *http.Request) {
 
 func AddNewProductChoice(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("html/addProductChoice.html"))
-	err := tmpl.Execute(w, nil)
+	dataToSend := struct {
+		User data.User
+	}{
+		User: data.ShowUser(r),
+	}
+	err := tmpl.Execute(w, dataToSend)
 	if err != nil {
 		return
 	}
@@ -434,7 +439,7 @@ func modifyProductGeneral(ID primitive.ObjectID, r *http.Request) error {
 		amount, _ := strconv.Atoi(r.FormValue("amount"))
 
 		general := data.General{
-			Manufacturer: r.FormValue("man"),
+			Manufacturer: r.FormValue("manufacturer"),
 			Model:        r.FormValue("model"),
 			Price:        price,
 			Discount:     discount,
@@ -572,7 +577,7 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 			conditions = append(conditions, bson.M{"output_power": bson.M{"$gte": build.GPU.TdpR}})
 		}
 		if !data.IsZero(build.Housing) {
-			conditions = append(conditions, bson.M{"ps_form_factor": build.Housing.PsFormFactor})
+			conditions = append(conditions, bson.M{"form_factor": build.Housing.PsFormFactor})
 		}
 	case "housing":
 		if !data.IsZero(build.Motherboard) {
@@ -597,8 +602,91 @@ func getCompatibilityFilter(productType string, r *http.Request) (bson.M, error)
 		filter["$and"] = conditions
 	}
 
-	fmt.Println(filter)
 	return filter, nil
+}
+
+func ListCategories(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
+	searchQuery := r.URL.Query().Get("search")
+	found := false
+
+	searchFilter := filters.SearchProducts(searchQuery)
+
+	cpuNumber, err := data.CpuCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	motherboardNumber, err := data.MotherboardCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	ramNumber, err := data.RamCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	gpuNumber, err := data.GpuCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	ssdNumber, err := data.SsdCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	hddNumber, err := data.HddCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	coolingNumber, err := data.CoolingCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	powerSupplyNumber, err := data.PowerSupplyCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+	housingNumber, err := data.HousingCollection.CountDocuments(context.TODO(), searchFilter)
+	if err != nil {
+		logger.Errorf("Error counting products: %v", err)
+	}
+
+	tmpl := template.Must(template.ParseFiles("html/searchAll.html"))
+
+	if cpuNumber+motherboardNumber+ramNumber+gpuNumber+ssdNumber+hddNumber+coolingNumber+
+		powerSupplyNumber+housingNumber != 0 {
+		found = true
+	}
+
+	dataToSend := struct {
+		Found             bool
+		User              data.User
+		CpuNumber         int
+		MotherboardNumber int
+		RamNumber         int
+		GpuNumber         int
+		SsdNumber         int
+		HddNumber         int
+		CoolingNumber     int
+		PowerSupplyNumber int
+		HousingNumber     int
+		SearchQuery       string
+	}{
+		Found:             found,
+		User:              data.ShowUser(r),
+		CpuNumber:         int(cpuNumber),
+		MotherboardNumber: int(motherboardNumber),
+		RamNumber:         int(ramNumber),
+		GpuNumber:         int(gpuNumber),
+		SsdNumber:         int(ssdNumber),
+		HddNumber:         int(hddNumber),
+		CoolingNumber:     int(coolingNumber),
+		PowerSupplyNumber: int(powerSupplyNumber),
+		HousingNumber:     int(housingNumber),
+		SearchQuery:       searchQuery,
+	}
+	err = tmpl.Execute(w, dataToSend)
+	if err != nil {
+		return
+	}
 }
 
 func ListProducts(w http.ResponseWriter, r *http.Request) {
@@ -968,6 +1056,7 @@ func decodeProduct(cur *mongo.Cursor, item interface{}) error {
 func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 	productType := r.FormValue("productType")
+	isCompatible := false
 
 	collection, item, err := defineStruct(productType)
 	if err != nil {
@@ -977,21 +1066,42 @@ func ListProductInfo(w http.ResponseWriter, r *http.Request) {
 
 	ObjID, err := primitive.ObjectIDFromHex(r.FormValue("productID")[10:34])
 
-	tmpl := template.Must(template.ParseFiles("html/productInformation.html"))
+	tmpl := template.New("productInformation.html").Funcs(templateFunctions.TmplFuncs)
+	tmpl, err = tmpl.ParseFiles("html/productInformation.html")
+	if err != nil {
+		logger.Errorf("Failed to parse template: %s", err)
+		return
+	}
 
 	item, err = getAndDecodeProduct(collection, item, ObjID)
 
-	dataToSend := struct {
-		ProductType string
-		Product     interface{}
-		User        data.User
-	}{
-		ProductType: productType,
-		Product:     item,
-		User:        data.ShowUser(r),
+	compatibilityFilter, err := getCompatibilityFilter(productType, r)
+	if err != nil {
+		logger.Errorf("Error when trying to get compatibility filter: %v", err)
+	}
+	compatibilityFilter["_id"] = ObjID
+	if err == nil {
+		number, err := collection.CountDocuments(context.TODO(), compatibilityFilter)
+		if err != nil {
+			logger.Errorf("Error counting products: %v", err)
+		} else if number == 1 {
+			isCompatible = true
+		}
 	}
 
-	err = tmpl.Execute(w, dataToSend)
+	dataToSend := struct {
+		ProductType  string
+		Product      interface{}
+		IsCompatible bool
+		User         data.User
+	}{
+		ProductType:  productType,
+		Product:      item,
+		IsCompatible: isCompatible,
+		User:         data.ShowUser(r),
+	}
+
+	err = tmpl.ExecuteTemplate(w, "productInformation.html", dataToSend)
 	if err != nil {
 		HandleError(err, logger, w)
 		return

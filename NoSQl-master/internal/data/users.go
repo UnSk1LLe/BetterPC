@@ -115,10 +115,20 @@ func UpdateUser(filter bson.M, update bson.M) (*mongo.UpdateResult, error) {
 	return result, nil
 }
 
-func ShowUser(r *http.Request) User {
+func ShowUser(r *http.Request, hide ...bool) User {
 	user, _ := GetUserBySessionToken(session.GetSessionTokenFromCookie(r))
+	if len(hide) > 0 && !hide[0] {
+		return user
+	}
 	user.UserInfo.Email = hideEmail(user.UserInfo.Email)
 	return user
+}
+
+func IsVerifiedCurrentUser(r *http.Request) bool {
+	if !ShowUser(r).Verified {
+		return false
+	}
+	return true
 }
 
 func hideEmail(email string) string {

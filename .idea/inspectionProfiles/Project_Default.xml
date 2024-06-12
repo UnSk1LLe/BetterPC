@@ -5,6 +5,7 @@
       <functions>
         <function importPath="MongoDb/internal/data" name="GetUser" />
         <function importPath="MongoDb/internal/data" name="GetProductById" />
+        <function importPath="MongoDb/internal/data" name="GetProducts" />
       </functions>
     </inspection_tool>
     <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">

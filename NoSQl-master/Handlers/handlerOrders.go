@@ -2,6 +2,7 @@ package Handlers
 
 import (
 	"MongoDb/internal/data"
+	"MongoDb/pkg/emailVerification"
 	"MongoDb/pkg/logging"
 	"encoding/json"
 	"errors"
@@ -55,7 +56,7 @@ func AddToCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userCart []data.ItemHeader
-	userCart, err = getCartFromCookie(r)
+	userCart, err = GetCartFromCookie(r)
 	if err != nil {
 		logger.Infof("Error getting cart: %v", err)
 		HandleError(err, logger, w)
@@ -126,7 +127,7 @@ func extractItemFromProduct(itemHeader data.ItemHeader, product interface{}) (da
 	}, nil
 }
 
-func getCartFromCookie(r *http.Request) ([]data.ItemHeader, error) {
+func GetCartFromCookie(r *http.Request) ([]data.ItemHeader, error) {
 	logger := logging.GetLogger()
 	userID := data.ShowUser(r).ID.Hex()
 	cartCookie, err := r.Cookie("cart" + userID)
@@ -183,7 +184,7 @@ func saveCartToCookie(w http.ResponseWriter, r *http.Request, cart []data.ItemHe
 
 func GetCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	userCart, err := getCartFromCookie(r)
+	userCart, err := GetCartFromCookie(r)
 	if err != nil {
 		HandleError(errors.New("error getting cart"), logger, w)
 		return
@@ -199,7 +200,7 @@ func GetCart(w http.ResponseWriter, r *http.Request) {
 func OpenCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
 
-	userCartHeaders, err := getCartFromCookie(r)
+	userCartHeaders, err := GetCartFromCookie(r)
 	if err != nil {
 		logger.Errorf("Error getting cart headers: %v", err)
 		HandleError(err, logger, w)
@@ -320,7 +321,7 @@ func UpdateCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCart, err := getCartFromCookie(r)
+	userCart, err := GetCartFromCookie(r)
 	if err != nil {
 		logger.Infof("Error getting cart: %v", err)
 		http.Error(w, "Error getting cart", http.StatusInternalServerError)
@@ -353,7 +354,7 @@ func DeleteFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCart, err := getCartFromCookie(r)
+	userCart, err := GetCartFromCookie(r)
 	if err != nil {
 		logger.Errorf("Error getting cart: %v", err)
 		http.Error(w, "Error getting cart", http.StatusInternalServerError)
@@ -383,31 +384,40 @@ func ClearUserCart(w http.ResponseWriter, r *http.Request) {
 	userID := data.ShowUser(r).ID.Hex()
 
 	cartCookie, err := r.Cookie("cart" + userID)
-	cartCookie.MaxAge = -1
 	if err != nil {
 		logger.Errorf("Failed to clear cart: %v", err)
 		return
 	}
+	cartCookie.MaxAge = -1
 
 	http.SetCookie(w, cartCookie)
 	logger.Infof("Cleared user cart: %v", userID)
 }
 
 func ClearUserBuild(w http.ResponseWriter, r *http.Request) {
+	logger := logging.GetLogger()
 	userID := data.ShowUser(r).ID.Hex()
 
-	cartCookie, err := r.Cookie("build" + userID)
-	cartCookie.MaxAge = -1
+	buildCookie, err := r.Cookie("build" + userID)
 	if err != nil {
 		return
 	}
+	buildCookie.MaxAge = -1
 
-	http.SetCookie(w, cartCookie)
+	http.SetCookie(w, buildCookie)
+	logger.Infof("Cleared user build: %v", userID)
 }
 
 func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
-	itemHeaders, err := getCartFromCookie(r)
+
+	if !data.IsVerifiedCurrentUser(r) {
+		logger.Infof("Could not create order: Not verified account!")
+		HandleError(errors.New("non verified users cannot create orders! Please, verify your email in your profile first"), logger, w)
+		return
+	}
+
+	itemHeaders, err := GetCartFromCookie(r)
 	if err != nil {
 		logger.Errorf("Error getting cart from cookie: %v", err)
 		HandleError(errors.New("error getting cart from cookie"), logger, w)
@@ -421,14 +431,24 @@ func CreateOrderFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = data.CreateOrder(userCart, data.ShowUser(r).ID)
+	order, err := data.CreateOrder(userCart, data.ShowUser(r).ID)
 	if err != nil {
 		logger.Errorf("Error creating order from cart: %v", err)
-		HandleError(errors.New("error creating order from cart"), logger, w)
+		HandleError(fmt.Errorf("error creating order from cart: %v", err), logger, w)
 		return
 	}
 
 	ClearUserCart(w, r)
+
+	user := data.ShowUser(r, false)
+	email := user.UserInfo.Email
+	subject := "Order №" + order.ID.Hex()
+	body := "Order №" + order.ID.Hex() + " was created! Order price: " + strconv.Itoa(order.Price) + " ₸. See more detailed information in your profile!"
+	err = emailVerification.SendEmail(email, subject, body)
+	if err != nil {
+		HandleError(errors.New("order successfully created but failed to send notification to email"), logger, w)
+		return
+	}
 	_ = showMessage("/shop", "Order has been created successfully! You can check it in your profile.", w)
 	return
 }
@@ -450,6 +470,13 @@ func ConvertToItemHeaders(productHeaders []data.ProductHeader) []data.ItemHeader
 
 func CreateOrderFromBuild(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger()
+
+	if !data.IsVerifiedCurrentUser(r) {
+		logger.Infof("Could not create order: Not verified account!")
+		HandleError(errors.New("non verified users cannot create orders! Please, verify your email in your profile first"), logger, w)
+		return
+	}
+
 	productHeaders, err := getBuildFromCookie(r)
 	if err != nil {
 		logger.Errorf("Error getting build from cookie: %v", err)
@@ -466,7 +493,7 @@ func CreateOrderFromBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = data.CreateOrder(userBuild, data.ShowUser(r).ID)
+	order, err := data.CreateOrder(userBuild, data.ShowUser(r).ID)
 	if err != nil {
 		logger.Errorf("Error creating order from build: %v", err)
 		HandleError(errors.New("error creating order from build"), logger, w)
@@ -474,6 +501,16 @@ func CreateOrderFromBuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ClearUserBuild(w, r)
+
+	user := data.ShowUser(r, false)
+	email := user.UserInfo.Email
+	subject := "Order №" + order.ID.Hex()
+	body := "Order №" + order.ID.Hex() + " was created! Order price: " + strconv.Itoa(order.Price) + " ₸. See more detailed information in your profile!"
+	err = emailVerification.SendEmail(email, subject, body)
+	if err != nil {
+		HandleError(errors.New("order successfully created but failed to send notification to email"), logger, w)
+		return
+	}
 	_ = showMessage("/shop", "Order has been created successfully! You can check it in your profile.", w)
 	return
 }
@@ -492,5 +529,15 @@ func CancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Infof("Order cancelled: %v", itemID)
+	user := data.ShowUser(r, false)
+	email := user.UserInfo.Email
+	subject := "Order №" + itemID.Hex()
+	body := "Order №" + itemID.Hex() + " was cancelled!"
+	err = emailVerification.SendEmail(email, subject, body)
+	if err != nil {
+		HandleError(errors.New("order cancelled but failed to send notification to email"), logger, w)
+		return
+	}
+
 	_ = showMessage("/shop", "Order has been cancelled successfully!", w)
 }

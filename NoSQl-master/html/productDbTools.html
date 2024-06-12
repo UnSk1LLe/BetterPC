@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Manager</title>
+    <link rel="stylesheet" href="./assets/css/tools.css">
+</head>
+
+<body>
+<header>
+    <h1>Shop Manager</h1>
+    <nav>
+        <ul>
+            <li><a href="/productDbTools?productType=cpu">CPU</a></li>
+            <li><a href="/productDbTools?productType=motherboard">Motherboard</a></li>
+            <li><a href="/productDbTools?productType=ram">RAM</a></li>
+            <li><a href="/productDbTools?productType=gpu">GPU</a></li>
+            <li><a href="/productDbTools?productType=ssd">SSD</a></li>
+            <li><a href="/productDbTools?productType=hdd">HDD</a></li>
+            <li><a href="/productDbTools?productType=powersupply">Power Supply</a></li>
+            <li><a href="/productDbTools?productType=cooling">Cooling</a></li>
+            <li><a href="/productDbTools?productType=housing">Housing</a></li>
+        </ul>
+    </nav>
+</header>
+<main>
+    <section class="table-section">
+        <table id="product-table">
+            <thead>
+            <tr>
+                <th>№</th>
+                <th>ID</th>
+                <th>Model</th>
+                <th>Manufacturer</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Total Price</th>
+                <th>Select</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ if .ProductsList }}
+            {{ range $index ,$item := .ProductsList }}
+            <tr>
+                <td>{{$index}}</td>
+                <td>{{$item.ProductHeader.ID}}</td>
+                <td>{{$item.General.Model}}</td>
+                <td>{{$item.General.Manufacturer}}</td>
+                <td>{{$item.General.Price}}</td>
+                <td>{{$item.General.Discount}}</td>
+                <td>{{ calculateDiscountPrice $item.General.Price $item.General.Discount }}</td>
+                <td><input type="checkbox"></td>
+            </tr>
+            {{ end }}
+            {{ end }}
+            </tbody>
+        </table>
+    </section>
+    <section class="detail-section">
+        <div id="product-details">
+            <div>
+                <h2>Product Details</h2>
+                <p><strong>ID:</strong> 1</p>
+                <p><strong>Model:</strong> Product 1</p>
+                <p><strong>Manufacturer:</strong> Manufacturer A</p>
+                <p><strong>Price:</strong> $100</p>
+                <p><strong>Discount:</strong> 10%</p>
+                <p><strong>Total Price:</strong> $90</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="scripts.js"></script>
+</body>
+
+</html>

@@ -695,6 +695,46 @@ select {
     color: black;
 }
 
+.catalog-card-result {
+    width: 300px;
+    height: 50px;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: black;
+    position: relative;
+}
+
+.catalog-card-result:hover {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.catalog-card-result img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.catalog-card-result .badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: red;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
 #add-panel {
     display: inline-flex;
     width: 200px;
@@ -711,10 +751,25 @@ select {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-#shopping-cart {
+.shopping-cart {
+    position: relative;
     gap: 5px;
     padding: 5px;
     padding-right: 30px;
+}
+
+.shopping-cart .cart-badge {
+    display: none;
+    position: absolute;
+    top: -3px;
+    left: 20px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
 }
 
 #shopping-cart img,
@@ -766,7 +821,7 @@ h2 {
 }
 
 .submit-button:disabled {
-    background-color: rgba(77, 81, 119, 0.56); /* Change to desired disabled color */
+    background-color: rgba(77, 81, 119, 0.56);
     cursor: not-allowed;
 }
 

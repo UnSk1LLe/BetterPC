@@ -3,7 +3,9 @@ package filters
 import (
 	"MongoDb/pkg/logging"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -64,24 +66,57 @@ func getInterval(from string, to string) (int, int, error) {
 	return minValue, maxValue, nil
 }
 
+func getFloatInterval(from string, to string) (float64, float64, error) {
+	logger := logging.GetLogger()
+	var minValue, maxValue float64
+	var err error
+	if from != "" {
+		minValue, err = strconv.ParseFloat(from, 64)
+		if err != nil {
+			logger.Errorf("Error parsing price from: %v", err)
+			return minValue, maxValue, err
+		}
+	} else {
+		minValue = 0
+	}
+
+	if to != "" {
+		maxValue, err = strconv.ParseFloat(to, 64)
+		if err != nil {
+			logger.Errorf("Error parsing price to: %v", err)
+			return minValue, maxValue, err
+		}
+	} else {
+		maxValue = 9999999
+	}
+
+	if minValue > maxValue {
+		temp := minValue
+		minValue = maxValue
+		maxValue = temp
+	}
+	return minValue, maxValue, nil
+}
+
 func getIntervalPrice(r *http.Request) (int, int, error) {
 	keyFromStr := r.Form.Get("Price-min")
 	keyToStr := r.Form.Get("Price-max")
 
-	var keyFrom, keyTo int
+	keyFrom := 0
+	keyTo := 1000000
 	var err error
 
 	if keyFromStr != "" {
 		keyFrom, err = strconv.Atoi(keyFromStr)
 		if err != nil {
-			return 0, 0, err
+			return keyFrom, keyTo, err
 		}
 	}
 
 	if keyToStr != "" {
 		keyTo, err = strconv.Atoi(keyToStr)
 		if err != nil {
-			return 0, 0, err
+			return keyFrom, keyTo, err
 		}
 	}
 
@@ -101,6 +136,61 @@ func getIntervalFilter(key string, r *http.Request) bson.M {
 
 	if keyFrom != 0 || KeyTo != 0 {
 		filter = bson.M{"$gte": keyFrom, "$lte": KeyTo}
+	}
+	return filter
+}
+
+func getFloatIntervalFilter(key string, r *http.Request) bson.M {
+	keyFromStr := r.Form.Get(key + "-min")
+	keyToStr := r.Form.Get(key + "-max")
+
+	filter := bson.M{}
+
+	keyFrom, KeyTo, err := getFloatInterval(keyFromStr, keyToStr)
+	if err != nil {
+		return nil
+	}
+
+	if keyFrom != 0 || KeyTo != 0 {
+		filter = bson.M{"$gte": keyFrom, "$lte": KeyTo}
+	}
+	return filter
+}
+
+func getPriceFilter(r *http.Request) bson.M {
+	logger := logging.GetLogger()
+	filter := bson.M{}
+	priceFrom, priceTo, err := getIntervalPrice(r)
+	if err != nil {
+		logger.Error("Could not get price interval")
+		return filter
+	}
+
+	if priceFrom != 0 || priceTo != 0 {
+		effectivePrice := bson.M{
+			"$subtract": []interface{}{
+				"$general.price",
+				bson.M{
+					"$multiply": []interface{}{
+						"$general.price",
+						bson.M{"$divide": []interface{}{"$general.discount", 100}},
+					},
+				},
+			},
+		}
+		priceFilter := bson.M{}
+		if priceFrom != 0 {
+			priceFilter["$gte"] = priceFrom
+		}
+		if priceTo != 0 {
+			priceFilter["$lte"] = priceTo
+		}
+		filter["$expr"] = bson.M{
+			"$and": []bson.M{
+				{"$gte": []interface{}{effectivePrice, priceFrom}},
+				{"$lte": []interface{}{effectivePrice, priceTo}},
+			},
+		}
 	}
 	return filter
 }
@@ -153,7 +243,7 @@ func FilterCpu(r *http.Request) bson.M {
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	filter["tdp"] = getIntervalFilter("TDP", r)
 
@@ -220,49 +310,36 @@ func FilterMotherboard(r *http.Request) bson.M {
 	var manufacturers []string
 	var formFactors []string
 	var chipsets []string
+	var intelChipsets []string
+	var amdChipsets []string
 	var ramTypes []string
 	var sockets []string
-	var pcie []string
+	var slotsValues []string
+	var slots []int
+	var m2InterfacesValues []string
+	var m2Interfaces []int
 
 	manufacturers = r.Form["Manufacturer"]
 	formFactors = r.Form["Form-factor"]
-	chipsets = r.Form["Chipset"]
-	ramTypes = r.Form["Ram-type"]
+	ramTypes = r.Form["RAM type"]
 	sockets = r.Form["Socket"]
-	pcie = r.Form["PCI-E"]
+	intelChipsets = r.Form["Intel chipset groups"]
+	amdChipsets = r.Form["AMD chipset groups"]
+	slotsValues = r.Form["RAM slots"]
+	m2InterfacesValues = r.Form["M2 interfaces"]
+
+	appendIntFilterParameters(slotsValues, &slots)
+	appendIntFilterParameters(m2InterfacesValues, &m2Interfaces)
+
+	chipsets = append(chipsets, intelChipsets...)
+	chipsets = append(chipsets, amdChipsets...)
+
+	chipsetPattern := "^(" + strings.Join(chipsets, "|") + ")"
+
+	chipsetFilter := bson.M{"$regex": primitive.Regex{Pattern: chipsetPattern, Options: "i"}}
 
 	filter := bson.M{}
-	priceFrom, priceTo, err := getIntervalPrice(r)
-	if err != nil {
-		// Handle error
-	}
-
-	if priceFrom != 0 || priceTo != 0 {
-		effectivePrice := bson.M{
-			"$subtract": []interface{}{
-				"$general.price",
-				bson.M{
-					"$multiply": []interface{}{
-						"$general.price",
-						bson.M{"$divide": []interface{}{"$general.discount", 100}},
-					},
-				},
-			},
-		}
-		priceFilter := bson.M{}
-		if priceFrom != 0 {
-			priceFilter["$gte"] = priceFrom
-		}
-		if priceTo != 0 {
-			priceFilter["$lte"] = priceTo
-		}
-		filter["$expr"] = bson.M{
-			"$and": []bson.M{
-				{"$gte": []interface{}{effectivePrice, priceFrom}},
-				{"$lte": []interface{}{effectivePrice, priceTo}},
-			},
-		}
-	}
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -271,7 +348,7 @@ func FilterMotherboard(r *http.Request) bson.M {
 		filter["form_factor"] = bson.M{"$in": formFactors}
 	}
 	if len(chipsets) > 0 {
-		filter["chipset"] = bson.M{"$in": chipsets}
+		filter["chipset"] = chipsetFilter
 	}
 	if len(ramTypes) > 0 {
 		filter["ram.type"] = bson.M{"$in": ramTypes}
@@ -279,8 +356,11 @@ func FilterMotherboard(r *http.Request) bson.M {
 	if len(sockets) > 0 {
 		filter["socket"] = bson.M{"$in": sockets}
 	}
-	if len(pcie) > 0 {
-		filter["pci_standard"] = bson.M{"$in": pcie}
+	if len(slots) > 0 {
+		filter["ram.slots"] = bson.M{"$in": slots}
+	}
+	if len(m2Interfaces) > 0 {
+		filter["interfaces.M2"] = bson.M{"$in": m2Interfaces}
 	}
 
 	logger.Infof("Set filter: %v", filter)
@@ -297,40 +377,31 @@ func FilterPowerSupply(r *http.Request) bson.M {
 	}
 
 	var manufacturers []string
-	var formFactors []string
-	var modular []string
-	var gpuPower []string
-	var cpuPower []string
+	var modularValues []string
 
 	manufacturers = r.Form["Manufacturer"]
-	formFactors = r.Form["Form-factor"]
-	modular = r.Form["Modular"]
-	gpuPower = r.Form["GPU-power"]
-	cpuPower = r.Form["CPU-power"]
+	modularValues = r.Form["Modular"]
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
 	}
 
-	if len(formFactors) > 0 {
-		filter["form_factor"] = bson.M{"$in": formFactors}
+	modular := bson.M{}
+	if len(modularValues) == 1 {
+		value := modularValues[0]
+		if value == "yes" {
+			modular = bson.M{"$ne": false}
+		} else if value == "no" {
+			modular = bson.M{"$eq": false}
+		}
+		filter["modules"] = modular
 	}
 
-	if len(modular) > 0 {
-		filter["modules"] = bson.M{"$in": modular}
-	}
-
-	if len(gpuPower) > 0 {
-		filter["connectors.PCI_E"] = bson.M{"$in": gpuPower}
-	}
-
-	if len(cpuPower) > 0 {
-		filter["cpu_power"] = bson.M{"$in": cpuPower}
-	}
+	filter["output_power"] = getIntervalFilter("Output power", r)
 
 	logger.Infof("Set filter: %v", filter)
 	return filter
@@ -349,15 +420,19 @@ func FilterCooling(r *http.Request) bson.M {
 	var types []string
 	var sockets []string
 	var mountTypes []string
+	var fansNumberValues []string
+	var fansNumber []int
 
 	manufacturers = r.Form["Manufacturer"]
 	types = r.Form["Type"]
 	sockets = r.Form["Sockets"]
-	mountTypes = r.Form["Mount-Type"]
+	mountTypes = r.Form["Mount Type"]
+	fansNumberValues = r.Form["Fans"]
+	appendIntFilterParameters(fansNumberValues, &fansNumber)
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -375,6 +450,15 @@ func FilterCooling(r *http.Request) bson.M {
 		filter["mount_type"] = bson.M{"$in": mountTypes}
 	}
 
+	if len(fansNumber) > 0 {
+		filter["fans.0"] = bson.M{"$in": fansNumber}
+	}
+
+	filter["rpm.0"] = getIntervalFilter("RPM", r)
+	filter["rpm.1"] = getIntervalFilter("RPM", r)
+	filter["tdp"] = getIntervalFilter("TDP", r)
+	filter["noise_level"] = getIntervalFilter("Noise Level", r)
+
 	logger.Infof("Set filter: %v", filter)
 	return filter
 }
@@ -390,33 +474,51 @@ func FilterHousing(r *http.Request) bson.M {
 
 	var manufacturers []string
 	var formFactors []string
+	var driveBays35Values []string
+	var driveBays35 []int
+	var driveBays25Values []string
+	var driveBays25 []int
 	var mbFormFactors []string
-	var psFormFactors []string
+	var expansionSlotsValues []string
+	var expansionSlots []int
 
 	manufacturers = r.Form["Manufacturer"]
-	formFactors = r.Form["Form-Factor"]
-	mbFormFactors = r.Form["MB-Form-Factor"]
-	psFormFactors = r.Form["PS-Form-Factor"]
+	formFactors = r.Form["Form Factor"]
+	driveBays35Values = r.Form["3.5 Drive Bays"]
+	driveBays25Values = r.Form["2.5 Drive Bays"]
+	mbFormFactors = r.Form["MB Form Factor"]
+	expansionSlotsValues = r.Form["Expansion Slots"]
+
+	appendIntFilterParameters(driveBays35Values, &driveBays35)
+	appendIntFilterParameters(driveBays25Values, &driveBays25)
+	appendIntFilterParameters(expansionSlotsValues, &expansionSlots)
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
 	}
-
 	if len(formFactors) > 0 {
 		filter["form_factor"] = bson.M{"$in": formFactors}
 	}
-
+	if len(driveBays35) > 0 {
+		filter["drive_bays.3_5"] = bson.M{"$in": driveBays35}
+	}
+	if len(driveBays25) > 0 {
+		filter["drive_bays.2_5"] = bson.M{"$in": driveBays25}
+	}
 	if len(mbFormFactors) > 0 {
 		filter["mb_form_factor"] = bson.M{"$in": mbFormFactors}
 	}
-
-	if len(psFormFactors) > 0 {
-		filter["ps_form_factor"] = bson.M{"$in": psFormFactors}
+	if len(expansionSlots) > 0 {
+		filter["expansion_slots"] = bson.M{"$in": expansionSlots}
 	}
+
+	filter["graphic_card_size"] = getIntervalFilter("Graphic Card Size", r)
+	filter["cooler_height"] = getIntervalFilter("Cooler Height", r)
+	filter["weight"] = getIntervalFilter("Weight", r)
 
 	logger.Infof("Set filter: %v", filter)
 	return filter
@@ -436,6 +538,9 @@ func FilterRam(r *http.Request) bson.M {
 	var frequencies []int
 	var types []string
 	var formFactors []string
+	var voltagesValues []string
+	var voltages []float64
+	var casLatencies []string
 
 	manufacturers = r.Form["Manufacturer"]
 	capacityValues := r.Form["Capacity"]
@@ -444,12 +549,17 @@ func FilterRam(r *http.Request) bson.M {
 	frequencyValues := r.Form["Frequency"]
 	appendIntFilterParameters(frequencyValues, &frequencies)
 
-	types = r.Form["ram-type"]
-	formFactors = r.Form["form-factor"]
+	types = r.Form["Type"]
+	formFactors = r.Form["Form-factor"]
+
+	voltagesValues = r.Form["Voltage"]
+	appendFloatFilterParameters(voltagesValues, &voltages)
+
+	casLatencies = r.Form["CAS Latency"]
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -459,9 +569,7 @@ func FilterRam(r *http.Request) bson.M {
 		filter["capacity"] = bson.M{"$in": capacities}
 	}
 
-	if len(frequencies) > 0 {
-		filter["frequency"] = bson.M{"$in": frequencies}
-	}
+	filter["frequency"] = getIntervalFilter("Frequency", r)
 
 	if len(types) > 0 {
 		filter["type"] = bson.M{"$in": types}
@@ -470,6 +578,12 @@ func FilterRam(r *http.Request) bson.M {
 	if len(formFactors) > 0 {
 		filter["form_factor"] = bson.M{"$in": formFactors}
 	}
+
+	if len(casLatencies) > 0 {
+		filter["cas_latency"] = bson.M{"$in": casLatencies}
+	}
+
+	filter["voltage"] = getFloatIntervalFilter("Voltage", r)
 
 	logger.Infof("Set RAM filter: %v", filter)
 	return filter
@@ -496,15 +610,15 @@ func FilterHdd(r *http.Request) bson.M {
 	appendIntFilterParameters(capacityValues, &capacities)
 
 	interfaces = r.Form["Interface"]
-	writeMethods = r.Form["WriteMethod"]
-	spindleSpeedValues := r.Form["SpindleSpeed"]
+	writeMethods = r.Form["Write Method"]
+	spindleSpeedValues := r.Form["Spindle Speed"]
 	appendIntFilterParameters(spindleSpeedValues, &spindleSpeeds)
 
 	formFactors = r.Form["FormFactor"]
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -526,6 +640,8 @@ func FilterHdd(r *http.Request) bson.M {
 		filter["spindle_speed"] = bson.M{"$in": spindleSpeeds}
 	}
 
+	filter["transfer_rate"] = getIntervalFilter("Transfer Rate", r)
+
 	if len(formFactors) > 0 {
 		filter["form_factor"] = bson.M{"$in": formFactors}
 	}
@@ -545,7 +661,6 @@ func FilterSsd(r *http.Request) bson.M {
 
 	var manufacturers []string
 	var capacities []int
-	var interfaces []string
 	var memoryTypes []string
 	var formFactors []string
 
@@ -553,14 +668,13 @@ func FilterSsd(r *http.Request) bson.M {
 	capacityValues := r.Form["Capacity"]
 	appendIntFilterParameters(capacityValues, &capacities)
 
-	interfaces = r.Form["Interface"]
-	memoryTypes = r.Form["MemoryType"]
+	memoryTypes = r.Form["Memory Type"]
 
-	formFactors = r.Form["FormFactor"]
+	formFactors = r.Form["Form Factor"]
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -570,16 +684,21 @@ func FilterSsd(r *http.Request) bson.M {
 		filter["capacity"] = bson.M{"$in": capacities}
 	}
 
-	if len(interfaces) > 0 {
-		filter["interface"] = bson.M{"$in": interfaces}
+	if len(memoryTypes) > 0 {
+		regexPattern := strings.Join(memoryTypes, "|")
+		filter["memory_type"] = bson.M{"$regex": regexPattern, "$options": "i"}
 	}
 
-	if len(memoryTypes) > 0 {
-		filter["memory_type"] = bson.M{"$in": memoryTypes}
-	}
+	filter["read"] = getIntervalFilter("Read Speed", r)
+	filter["write"] = getIntervalFilter("Write Speed", r)
 
 	if len(formFactors) > 0 {
-		filter["form_factor"] = bson.M{"$in": formFactors}
+		escapedFormFactors := make([]string, len(formFactors))
+		for i, formFactor := range formFactors {
+			escapedFormFactors[i] = "\\b" + regexp.QuoteMeta(formFactor) + "\\b"
+		}
+		regexPattern := strings.Join(escapedFormFactors, "|")
+		filter["form_factor"] = bson.M{"$regex": regexPattern, "$options": "i"}
 	}
 
 	logger.Infof("Set SSD filter: %v", filter)
@@ -597,19 +716,29 @@ func FilterGpu(r *http.Request) bson.M {
 
 	var manufacturers []string
 	var architectures []string
+	var memoryCapacityValues []string
+	var memoryCapacity []int
 	var memoryTypes []string
-	var interfaces []string
-	var coolingTypes []string
+	var technicalProcessValues []string
+	var technicalProcess []int
+	var maxResolution []string
+	var maxMonitors []int
+	var maxMonitorsValues []string
 
 	manufacturers = r.Form["Manufacturer"]
 	architectures = r.Form["Architecture"]
-	memoryTypes = r.Form["MemoryType"]
-	interfaces = r.Form["Interface"]
-	coolingTypes = r.Form["CoolingType"]
+	memoryCapacityValues = r.Form["Memory capacity"]
+	memoryTypes = r.Form["Memory type"]
+	maxResolution = r.Form["Max resolution"]
+	maxMonitorsValues = r.Form["Max monitors"]
+
+	appendIntFilterParameters(memoryCapacityValues, &memoryCapacity)
+	appendIntFilterParameters(maxMonitorsValues, &maxMonitors)
+	appendIntFilterParameters(technicalProcessValues, &technicalProcess)
 
 	filter := bson.M{}
 
-	filter["general.price"] = getIntervalFilter("Price", r)
+	filter = getPriceFilter(r)
 
 	if len(manufacturers) > 0 {
 		filter["general.manufacturer"] = bson.M{"$in": manufacturers}
@@ -619,16 +748,28 @@ func FilterGpu(r *http.Request) bson.M {
 		filter["architecture"] = bson.M{"$in": architectures}
 	}
 
+	if len(memoryCapacity) > 0 {
+		filter["memory.capacity"] = bson.M{"$in": memoryCapacity}
+	}
+
 	if len(memoryTypes) > 0 {
 		filter["memory.type"] = bson.M{"$in": memoryTypes}
 	}
 
-	if len(interfaces) > 0 {
-		filter["interfaces.type"] = bson.M{"$in": interfaces}
+	filter["gpu_frequency"] = getIntervalFilter("GPU frequency", r)
+
+	if len(technicalProcess) > 0 {
+		filter["process_size"] = bson.M{"$in": technicalProcess}
 	}
 
-	if len(coolingTypes) > 0 {
-		filter["cooling.type"] = bson.M{"$in": coolingTypes}
+	filter["tdp"] = getIntervalFilter("TDP", r)
+
+	if len(maxResolution) > 0 {
+		filter["max_resolution"] = bson.M{"$in": maxResolution}
+	}
+
+	if len(maxMonitors) > 0 {
+		filter["max_monitors"] = bson.M{"$in": maxMonitors}
 	}
 
 	logger.Infof("Set GPU filter: %v", filter)

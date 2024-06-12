@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/mainStyle.css">
+</head>
+<header>
+    <nav>
+        <div id="menu">
+            <ul>
+                <li class="dropdown">
+                    <a href="/shop" class="dropbtn catalog-button">Catalog</a>
+                    <div class="dropdown-content">
+                        <a href="/listProducts?productType=cpu">CPU</a>
+                        <a href="/listProducts?productType=gpu">GPU</a>
+                        <a href="/listProducts?productType=motherboard">Motherboards</a>
+                        <a href="/listProducts?productType=ram">RAM</a>
+                        <a href="/listProducts?productType=powersupply">Power supply</a>
+                        <a href="/listProducts?productType=ssd">SSD</a>
+                        <a href="/listProducts?productType=hdd">HDD</a>
+                        <a href="/listProducts?productType=cooling">Cooling</a>
+                        <a href="/listProducts?productType=housing">Housing</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div id="search-bar">
+            <input type="text" id="search-input" placeholder="Search..." {{if .SearchQuery }} value="{{.SearchQuery}}" {{end}}>
+            <button id="search-button" onclick="searchALl()">
+                <img src="./assets/icons/search.png" alt="Search">
+            </button>
+        </div>
+        <div id="add-panel">
+            <div id="shopping-cart" class="shopping-cart">
+                <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+                <span id="cart-badge" class="cart-badge">5</span>
+            </div>
+            <div class="user-container">
+                <img src="./assets/icons/userdefault.png" alt="User Account">
+                <ul>
+                    <li class="dropdown">
+                        <span>
+                            <a href="#" class="dropbtn catalog-button">{{ .User.UserInfo.Name }}</a>
+                         </span>
+                        <div class="dropdown-content">
+                            <a href="/showUserProfile">Profile</a>
+                            <a href="/logout">Log out</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+<body>
+<h1>Choose PC component</h1>
+<div class="container">
+    {{ if .Found }}
+    {{ if ne .CpuNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('cpu')">
+        <img src="./assets/icons/cpu.png" alt="CPU">
+        CPU
+        <div class="badge">{{.CpuNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .MotherboardNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('motherboard')">
+        <img src="./assets/icons/motherboard.png" alt="MOTHERBOARD">
+        Motherboard
+        <div class="badge">{{.MotherboardNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .RamNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('ram')">
+        <img src="./assets/icons/ram.png" alt="RAM">
+        RAM
+        <div class="badge">{{.RamNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .GpuNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('gpu')">
+        <img src="./assets/icons/gpu.png" alt="GPU">
+        GPU
+        <div class="badge">{{.GpuNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .SsdNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('ssd')">
+        <img src="./assets/icons/ssd.png" alt="SSD">
+        SSD
+        <div class="badge">{{.SsdNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .HddNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('hdd')">
+        <img src="./assets/icons/hdd.png" alt="HDD">
+        HDD
+        <div class="badge">{{.HddNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .CoolingNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('cooling')">
+        <img src="./assets/icons/cooling.png" alt="COOLING">
+        Cooling
+        <div class="badge">{{.CoolingNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .PowerSupplyNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('powersupply')">
+        <img src="./assets/icons/powersupply.png" alt="POWER SUPPLY">
+        Power Supply
+        <div class="badge">{{.PowerSupplyNumber}}</div>
+    </a>
+    {{ end }}
+    {{ if ne .HousingNumber 0 }}
+    <a class="catalog-card-result" onclick="ListProducts('housing')">
+        <img src="./assets/icons/housing.png" alt="HOUSING">
+        Housing
+        <div class="badge">{{.HousingNumber}}</div>
+    </a>
+    {{ end }}
+    {{ else }}
+    <h3>No products found</h3>
+    {{ end }}
+</div>
+</body>
+<script src="./assets/js/searchAll.js"></script>
+<script>
+    let userID = '{{.User.ID}}'.slice(10, 34)
+
+    function inCartElementsNumber() {
+        let cart = getCookie('cart' + userID);
+        console.log(userID)
+        let counter = document.getElementById('cart-badge')
+        let number = 0
+
+        if (cart !== null) {
+            try {
+                cart = JSON.parse(decodeURIComponent(cart));
+                number = cart.length
+            } catch (e) {
+                console.error("No cart elements found", e);
+            }
+        }
+        counter.innerText = number.toString()
+
+        if (number > 0) {
+            counter.style.display = 'block'
+        } else {
+            counter.style.display = 'none'
+        }
+    }
+
+    function getCookie(name) {
+        let value = "; " + document.cookie;
+        let parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        inCartElementsNumber()
+    });
+</script>
+</html>

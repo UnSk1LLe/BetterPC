@@ -34,8 +34,9 @@
             </button>
         </div>
         <div id="add-panel">
-            <div id="shopping-cart">
+            <div id="shopping-cart" class="shopping-cart">
                 <a href="/openCart"><img src="./assets/icons/cart.png" alt="Shopping Cart"></a>
+                <span id="cart-badge" class="cart-badge">5</span>
             </div>
             <div class="user-container">
                 <img src="./assets/icons/userdefault.png" alt="User Account">
@@ -213,14 +214,14 @@
             </form>
         </div>
 
-        <div id="sort">
+        <!---<div id="sort">
             <label for="sort-price">Sort by Price:</label>
             <select id="sort-price">
                 <option value="">None</option>
                 <option value="asc">Low to High</option>
                 <option value="desc">High to Low</option>
             </select>
-        </div>
+        </div>--->
         <h2>Results</h2>
         <div id="product-list">
             {{ if .ProductsList }}
@@ -245,7 +246,6 @@
                         {{ else }}
                         <button name="outOfStock" class="buy-button" type="button" disabled>Out of stock</button>
                         {{ end }}
-                        <div id="addedText{{$index}}" style="display: none;">Added</div>
                     </div>
 
                     {{ if ne $item.General.Discount 0 }}
@@ -266,9 +266,6 @@
             <h3>No products found</h3>
             {{ end }}
         </div>
-        <form action="/addNewProductChoice" method="post">
-            <button class="submit-button" name="cpuForm" type="submit">Add Product</button>
-        </form>
         <div class="pagination">
             <ul class="pagination-list">
                 {{ if gt .TotalPages 1 }}
@@ -412,5 +409,59 @@
 
 </main>
 <script src="./assets/js/listProducts.js"></script>
+<script>
+    let userID = '{{.User.ID}}'.slice(10, 34)
+
+    function inCartElementsNumber() {
+        let cart = getCookie('cart' + userID);
+        let counter = document.getElementById('cart-badge')
+        let number = 0
+
+        if (cart !== null) {
+            try {
+                cart = JSON.parse(decodeURIComponent(cart));
+                number = cart.length
+            } catch (e) {
+                console.error("No cart elements found", e);
+            }
+        }
+        counter.innerText = number.toString()
+
+        if (number > 0) {
+            counter.style.display = 'block'
+        } else {
+            counter.style.display = 'none'
+        }
+    }
+
+    function isProductInCart(productID) {
+        let cart = getCookie('cart' + userID);
+
+        if (cart !== null) {
+            try {
+                cart = JSON.parse(decodeURIComponent(cart));
+                return cart.some(item => item.ID === productID);
+            } catch (e) {
+                console.error("No cart elements found", e);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        {{ range $index, $item := .ProductsList }}
+        if (isProductInCart('{{ $item.ProductHeader.ID }}'.slice(10, 34))) {
+            let cartButton = document.getElementById('addToCartButton{{ $index }}')
+            cartButton.style.backgroundColor = '#e3bc00';
+            cartButton.innerText = 'In cart'
+            cartButton.onclick = function () {
+                window.location.href = `/openCart`
+            }
+        }
+        {{ end }}
+        inCartElementsNumber()
+    });
+</script>
 </body>
 </html>

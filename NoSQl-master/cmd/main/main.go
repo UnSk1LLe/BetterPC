@@ -19,8 +19,10 @@ func main() {
 	http.HandleFunc("/logout", Handlers.Logout)
 	http.HandleFunc("/home", Handlers.AuthMiddleware(Handlers.Home))
 	http.HandleFunc("/shop", Handlers.AuthMiddleware(Handlers.Shop))
+	http.HandleFunc("/searchAll", Handlers.AuthMiddleware(Handlers.ListCategories))
 	http.HandleFunc("/showUserProfile", Handlers.AuthMiddleware(Handlers.ShowProfile))
 	http.HandleFunc("/editUserInfoForm", Handlers.AuthMiddleware(Handlers.EditUserInfoForm))
+	http.HandleFunc("/sendVerificationToken", Handlers.AuthMiddleware(Handlers.SendVerificationToken))
 	http.HandleFunc("/editUserInfo", Handlers.AuthMiddleware(Handlers.EditUserInfo))
 	http.HandleFunc("/showProduct", Handlers.AuthMiddleware(Handlers.ListProductInfo))
 	http.HandleFunc("/listProducts", Handlers.AuthMiddleware(Handlers.ListProducts))
@@ -43,11 +45,7 @@ func main() {
 	http.HandleFunc("/modifyProduct", Handlers.AuthMiddleware(Handlers.ModifyProduct))
 	http.HandleFunc("/deleteProduct", Handlers.AuthMiddleware(Handlers.DeleteProduct))
 
-	/*http.HandleFunc("/addProductForm", Handlers.AuthMiddleware(Handlers.AddProductForm)) //new functions
-	http.HandleFunc("/addProduct", Handlers.AuthMiddleware(Handlers.AddProduct))
-	http.HandleFunc("/modifyProductForm", Handlers.AuthMiddleware(Handlers.ModifyProductForm))
-	http.HandleFunc("/modifyProduct", Handlers.AuthMiddleware(Handlers.ModifyProduct))
-	http.HandleFunc("/deleteProduct", Handlers.AuthMiddleware(Handlers.DeleteProduct))*/
+	/*http.HandleFunc("/productDbTools", Handlers.AuthMiddleware(Handlers.ListProductsDetailed)) //new functions*/
 
 	handler := http.StripPrefix("/assets/", http.FileServer(http.Dir("html/assets")))
 	http.Handle("/assets/", handler)

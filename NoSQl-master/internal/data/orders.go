@@ -67,12 +67,12 @@ func updateProductAmount(productType string, itemID primitive.ObjectID, amountCh
 	return nil
 }
 
-func CreateOrder(items []Item, userID primitive.ObjectID) error {
+func CreateOrder(items []Item, userID primitive.ObjectID) (Order, error) {
 	logger := logging.GetLogger()
 	if len(items) == 0 {
-		return errors.New("order must contain at least one item")
+		return Order{}, errors.New("order must contain at least one item")
 	} else if userID == primitive.NilObjectID {
-		return errors.New("userID cannot be nil")
+		return Order{}, errors.New("userID cannot be nil")
 	}
 	var collection *mongo.Collection
 	var err error
@@ -81,7 +81,7 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 	for _, item := range items {
 		collection, err = DefineCollection(item.ItemHeader.ProductType)
 		if err != nil {
-			return err
+			return Order{}, err
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -94,10 +94,10 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 		}
 		err = collection.FindOne(ctx, bson.M{"_id": item.ItemHeader.ID}).Decode(&product)
 		if err != nil {
-			return err
+			return Order{}, err
 		}
 		if product.General.Amount < item.ItemHeader.Amount {
-			return fmt.Errorf("not enough amount for product %s", item.ItemHeader.ID.Hex())
+			return Order{}, fmt.Errorf("not enough amount for product %s", item.ItemHeader.ID.Hex())
 		}
 	}
 
@@ -116,7 +116,7 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 	_, err = OrdersCollection.InsertOne(ctx, newOrder)
 	if err != nil {
 		logger.Errorf("Failed to insert new order: %v", err)
-		return err
+		return Order{}, err
 	}
 
 	//Reserve the amount after checking and creating order
@@ -124,12 +124,11 @@ func CreateOrder(items []Item, userID primitive.ObjectID) error {
 		err = updateProductAmount(item.ItemHeader.ProductType, item.ItemHeader.ID, -item.ItemHeader.Amount)
 		if err != nil {
 			logger.Errorf("Failed to update product amount while rollback: %v", err)
-			return err
+			return Order{}, err
 		}
 	}
-	logger.Infof("New Order CREATED: %s", newOrder.ID)
-	fmt.Println(newOrder)
-	return nil
+	logger.Infof("New Order CREATED: %v", newOrder)
+	return newOrder, nil
 }
 
 func CancelOrder(orderID primitive.ObjectID) error {

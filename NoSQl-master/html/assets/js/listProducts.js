@@ -36,7 +36,7 @@ listCompatibleOnly = listCompatibleOnly === 'true';
 
 function listProducts(productType, pageNumber, searchQuery, saveFilters) {
     let urlParams = new URLSearchParams(window.location.search);
-    const sort = document.getElementById('sort-price').value;
+    const sort = "None"//document.getElementById('sort-price').value;
     urlParams.set('productType', productType);
     urlParams.set('listCompatibleOnly', listCompatibleOnly);
     if (saveFilters) {
@@ -206,9 +206,13 @@ function addToCart(productType, productID, index) {
     xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200) {
-                alert('Product added to cart');
-                document.getElementById('addToCartButton' + index).style.display = 'none';
-                document.getElementById('addedText' + index).style.display = 'block';
+                let cartButton = document.getElementById('addToCartButton' + index)
+                cartButton.style.backgroundColor = '#e3bc00';
+                cartButton.innerText = 'In cart'
+                cartButton.onclick = function () {
+                    window.location.href = `/openCart`
+                }
+                cartNumberInc()
             } else {
                 alert('Error adding product to cart');
             }
@@ -216,6 +220,14 @@ function addToCart(productType, productID, index) {
     };
     let params = 'productType=' + encodeURIComponent(productType) + '&productID=' + encodeURIComponent(productID);
     xhr.send(params);
+}
+
+function cartNumberInc() {
+    let counter = document.getElementById('cart-badge')
+    let number = parseInt(counter.innerText)
+    number++
+    counter.innerText = number.toString()
+    counter.style.display = 'block'
 }
 
 function addToBuild(productType, productID) {
@@ -330,3 +342,9 @@ document.querySelectorAll('.product-price').forEach(function(element) {
     let productPrice = parseInt(element.innerText);
     element.innerText = formatPrice(productPrice) + " ₸";
 });
+
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+}
