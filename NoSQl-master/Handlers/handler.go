@@ -93,13 +93,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			HandleError(err, logger, w)
 		}
 
-		err = sendEmailVerificationToken(r, token)
+		err = sendEmailVerificationToken(recordUser, token)
 		if err != nil {
-			HandleError(errors.New("failed to send verification token"), logger, w)
+			HandleError(errors.New("account created, but not verified. Please, verify it in your profile"), logger, w)
 			return
 		}
 
-		logger.Infof("USER WAS CREATED: %s", recordUser)
+		logger.Infof("USER WAS CREATED: %v", recordUser)
 		messageText := "Your account has been created! Please, check your email to verify your account!"
 		_ = showMessage("/shop", messageText, w)
 		return
@@ -124,7 +124,8 @@ func SendVerificationToken(w http.ResponseWriter, r *http.Request) {
 		HandleError(err, logger, w)
 		return
 	}
-	err = sendEmailVerificationToken(r, token)
+	user := data.ShowUser(r, false)
+	err = sendEmailVerificationToken(user, token)
 	if err != nil {
 		HandleError(errors.New("failed to send verification token"), logger, w)
 		return
@@ -134,10 +135,8 @@ func SendVerificationToken(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func sendEmailVerificationToken(r *http.Request, token string) error {
+func sendEmailVerificationToken(user data.User, token string) error {
 	logger := logging.GetLogger()
-
-	user := data.ShowUser(r, false)
 
 	filter := bson.M{"_id": user.ID}
 	update := bson.M{"$set": bson.M{"verification_token": token}}

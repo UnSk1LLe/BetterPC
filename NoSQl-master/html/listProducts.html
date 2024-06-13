@@ -449,6 +449,21 @@
         return false;
     }
 
+    function isProductInBuild(productID) {
+        let build = getCookie('build' + userID);
+
+        if (build !== null) {
+            try {
+                build = JSON.parse(decodeURIComponent(build));
+                return build.some(item => item.ID === productID);
+            } catch (e) {
+                console.error("No build elements found", e);
+                return false;
+            }
+        }
+        return false;
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         {{ range $index, $item := .ProductsList }}
         if (isProductInCart('{{ $item.ProductHeader.ID }}'.slice(10, 34))) {
@@ -458,6 +473,12 @@
             cartButton.onclick = function () {
                 window.location.href = `/openCart`
             }
+        }
+        if (isProductInBuild('{{ $item.ProductHeader.ID }}'.slice(10, 34))) {
+            let buildButton = document.getElementById('addToBuildButton{{ $index }}')
+            buildButton.style.backgroundColor = '#e3bc00';
+            buildButton.innerText = 'Added to Build'
+            buildButton.onclick = function () {}
         }
         {{ end }}
         inCartElementsNumber()
